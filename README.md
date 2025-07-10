@@ -2,4 +2,4 @@
 
 Multi agents reinforcement learning for local energy market
 
-Pictures/Communication_Schema.jpg
+![Schéma de communication](Pictures/Communication_Schema.jpg)

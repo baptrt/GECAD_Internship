@@ -1,0 +1,15 @@
+2025-06-16 11:29:22,914 - peak.bootloader - INFO - instanciating agent global_agent from file agents_multi_test/Global_Agent.py
+2025-06-16 11:29:23,018 - peak.bootloader - INFO - starting agent global_agent
+2025-06-16 11:29:23,417 - peak.bootloader - CRITICAL - agent global_agent terminated (__init__() missing 6 required positional arguments: 'a', 'b', 'tmin', 'tmax', 'pmin', and 'pmax')
+Stack (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/Users/baptistetrt/.pyenv/versions/3.9.6/lib/python3.9/multiprocessing/spawn.py", line 116, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/Users/baptistetrt/.pyenv/versions/3.9.6/lib/python3.9/multiprocessing/spawn.py", line 129, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/Users/baptistetrt/.pyenv/versions/3.9.6/lib/python3.9/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/Users/baptistetrt/.pyenv/versions/3.9.6/lib/python3.9/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/baptistetrt/Desktop/ENS/Stage 2A/GECAD/Algorithmes_Python/venv-peak/lib/python3.9/site-packages/peak/bootloader.py", line 95, in boot_agent
+    _logger.critical(f"agent {jid.localpart} terminated ({error})", stack_info=True)

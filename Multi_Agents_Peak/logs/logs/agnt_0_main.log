@@ -1,0 +1,2 @@
+2025-06-16 11:50:27,602 - peak.bootloader - INFO - instanciating agent agnt_0 from file agents_multi_test/agent_0.py
+2025-06-16 11:50:27,660 - peak.bootloader - INFO - starting agent agnt_0

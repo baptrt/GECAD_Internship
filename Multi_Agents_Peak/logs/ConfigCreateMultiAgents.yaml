@@ -1,0 +1,56 @@
+agents:
+  agent_0:
+    file: agents_multi/agent_0.py
+    params:
+      id: 0
+      jid: agent_0@xmpp.gecad.isep.ipp.pt
+      role: global
+  agent_1:
+    file: agents_multi/agent_1.py
+    params:
+      a: 1
+      b: -10.0
+      id: 1
+      jid: agent_1@xmpp.gecad.isep.ipp.pt
+      neighbors:
+      - 2
+      - 3
+      pmax: 15.0
+      pmin: 0.0
+      role: producer
+      tmax: 15.0
+      tmin: 0.0
+  agent_2:
+    file: agents_multi/agent_2.py
+    params:
+      a: 1
+      b: 20.0
+      id: 2
+      jid: agent_2@xmpp.gecad.isep.ipp.pt
+      neighbors:
+      - 1
+      - 3
+      pmax: 0.0
+      pmin: -15.0
+      role: consumer
+      tmax: 0.0
+      tmin: -15.0
+  agent_3:
+    file: agents_multi/agent_3.py
+    params:
+      a: 1
+      b: 10.0
+      id: 3
+      jid: agent_3@xmpp.gecad.isep.ipp.pt
+      neighbors:
+      pmax: inf
+      pmin: -inf
+      role: grid
+      tmax: inf
+      tmin: -inf
+defaults:
+  debug_mode: false
+  domain: xmpp.gecad.isep.ipp.pt
+  log_file_mode: w
+  log_folder: logs
+  password: agentpass

@@ -167,21 +167,21 @@ def initialize_test_2():
     for i in range(n_agents):
         if agents[i].role == roles[0]:
             a[i] = 1
-            b[i] = -10
+            b[i] = -10 * np.random.uniform(0.9, 1.1)
             pmax[i] = 60
             pmin[i] = 0
             tmax[i] = pmax[i]
             tmin[i] = pmin[i]
         elif agents[i].role == roles[1]:
             a[i] = 1
-            b[i] = 20
+            b[i] = 20 * np.random.uniform(0.9, 1.1)
             pmax[i] = 0
             pmin[i] = -30
             tmax[i] = pmax[i]
             tmin[i] = pmin[i]
         else:
             a[i] = 1
-            b[i] = 10
+            b[i] = 10 * np.random.uniform(0.9, 1.1)
             pmax[i] = np.inf
             pmin[i] = -np.inf
             tmax[i] = pmax[i]

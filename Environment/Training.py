@@ -45,7 +45,7 @@ model = SAC(
     verbose=1
 )
 
-model.learn(total_timesteps=1000, callback=eval_callback)
+model.learn(total_timesteps=100_000, callback=eval_callback)
 
 # ------------------------------
 # 5. Save the model and the VecNormalize wrapper

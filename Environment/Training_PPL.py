@@ -50,7 +50,7 @@ def evaluate(model, env, n_eval_episodes=5):
 
 # ------------------------------
 # 4. Population-Based Learning loop
-N = 4  # Nombre d'agents dans la population
+N = 3  # Nombre d'agents dans la population
 K = 3  # Nombre de cycles de sélection/mutation
 T = 5000  # Nombre de timesteps par cycle
 
@@ -96,7 +96,7 @@ final_scores = [evaluate(agent["model"], envs[i]) for i, agent in enumerate(popu
 best_index = np.argmax(final_scores)
 best_agent = population[best_index]
 
-print(f"\n🏆 Meilleur agent : {best_index}, score = {final_scores[best_index]:.2f}")
+print(f"\n Meilleur agent : {best_index}, score = {final_scores[best_index]:.2f}")
 os.makedirs("best_agent", exist_ok=True)
 best_agent["model"].save("best_agent_PPL/sac_model.zip")
 envs[best_index].save("best_agent_PPL/vecnormalize.pkl")

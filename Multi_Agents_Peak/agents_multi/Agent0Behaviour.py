@@ -37,7 +37,7 @@ class Agent0Behaviour(OneShotBehaviour):
                     j = int(data["to"])
                     Tij = float(data["T_ij"])
 
-                    # on mémorise l'échange
+                    # The exchange is memorised
                     self.exchanges[(i, j)] = Tij
                     received_msgs += 1
                     print(f"[{self.agent.name}] <-- Received {received_msgs}/{expected_msgs} "
@@ -68,9 +68,9 @@ class Agent0Behaviour(OneShotBehaviour):
 
             avg = 0.5 * (Tij - Tji)
             T_final[i, j] = avg
-            T_final[j, i] = -avg
+            T_final[j, i] = - avg
 
-            # Comparaison avec l'itération précédente
+            # Comparison with previous iteration
             prev_Tij = self.prev_exchanges.get((i, j), None)
             prev_Tji = self.prev_exchanges.get((j, i), None)
 
@@ -81,21 +81,21 @@ class Agent0Behaviour(OneShotBehaviour):
                 f"ΔTij={'' if prev_Tij is None else f'{Tij - prev_Tij:+.6f}'}"
             )
 
-            # Seulement si valeurs précédentes disponibles
+            # Only if previous values available
             if prev_Tij is not None:
                 list_residuals.append(abs(prev_Tij - Tij))
             if prev_Tji is not None:
                 list_residuals.append(abs(prev_Tji - Tji))
 
-            # Mise à jour pour la prochaine itération
+            # Update for the next iteration
             self.prev_exchanges[(i, j)] = Tij
             self.prev_exchanges[(j, i)] = Tji
 
-        print(f"[{self.agent.name}] --- Matrix T_final calculated :\n{T_final*self.n_agents}")
+        print(f"[{self.agent.name}] --- Matrix T_final calculated :\n{T_final}")
+        print(f"[{self.agent.name}] --- P_l: {np.sum(np.abs(T_final[:, -1])):.6f}")
         
         residual = max(list_residuals) if list_residuals else float("inf")
         return T_final, residual
-
 
     async def send_final_exchanges(self, T_final):
         for i in range(1, self.n_agents):  
@@ -111,7 +111,7 @@ class Agent0Behaviour(OneShotBehaviour):
         self.stopped_agents = set()
 
         while True:
-            # Écoute prioritaire des messages d'arrêt
+            # Priority playback of stop messages
             msg = await self.receive(timeout=0.5)
             if msg:
                 print(f"[{self.agent.name}] Message received : {msg}")
@@ -135,7 +135,7 @@ class Agent0Behaviour(OneShotBehaviour):
                     break
 
 
-            # Traitement normal si au moins un agent est encore actif
+            # Normal treatment if at least one agent is still active
             self.residual = []
             success = await self.receive_power_requests()
             if not success:

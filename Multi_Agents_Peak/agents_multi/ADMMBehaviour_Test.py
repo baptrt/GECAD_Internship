@@ -5,7 +5,7 @@ import json
 import asyncio
 
 class ADMMBehaviour_Test(OneShotBehaviour):
-    def __init__(self, a, b, n_agents, tmin, tmax, pmin, pmax, neighbors, rho, rhol, max_iters=500, max_error=1e-1):
+    def __init__(self, a, b, n_agents, tmin, tmax, pmin, pmax, neighbors, rho, rhol, max_iters=500, max_error=1e-3):
         super().__init__()
         self.a = a
         self.b = b
@@ -120,7 +120,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                             T_ij = data["T_ij"]
                             if isinstance(T_ij, list):
                                 raise ValueError(f"T_ij received is a list : {T_ij}")
-                            self.T[j, i] = - float(T_ij)
+                            self.T_new[j, i] = float(T_ij)
 
                             self.neighbor_status[j] = data.get("converged", False)
                             self.neighbor_global_status[j] = data.get("global_converged", False)
@@ -142,20 +142,20 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                             # Message state useless now, but useful later
                             self.agent._custom_buffer.append(msg)
                     except Exception as e:
-                        print(f"[{self.agent.name}] !!! Erreur traitement message state : {e}")
+                        print(f"[{self.agent.name}] !!! Message processing error state : {e}")
                         return False
 
                 elif msg_type == "ack":
                     pass
 
                 else:
-                    print(f"[{self.agent.name}] !!! Type inconnu, mis en buffer : {msg}")
+                    print(f"[{self.agent.name}] !!! Unknown type, buffered : {msg}")
                     self.agent._custom_buffer.append(msg)
 
             else:
                 timeout_counter += 1
                 if timeout_counter >= max_timeouts:
-                    print(f"[{self.agent.name}]  Réception interrompue après {max_timeouts} timeouts.")
+                    print(f"[{self.agent.name}] Reception interrupted after {max_timeouts} timeouts.")
                     return False
                 
         return True
@@ -169,7 +169,9 @@ class ADMMBehaviour_Test(OneShotBehaviour):
 
         for j in self.neighbors:
             bt2 = self.T[i, j] - self.t_mean + self.p - self.mu
-            self.T_new[i, j] = (self.rho * bt1[i, j] + bt2 * self.rhol - self.gamma[i, j]) / (self.rho + self.rhol)
+            self.T_new[i, j] = (self.rho * bt1[i, j] + bt2 * self.rhol - self.gamma[i, j]) / (self.rho + self.rhol) #
+            print(f"[{self.agent.name}] T_new[{i}, {j}] without = {(self.rho * bt1[i, j] + bt2 * self.rhol) / (self.rho + self.rhol):.3f}")
+            print(f"[{self.agent.name}] T_new[{i}, {j}] with = {self.T_new[i, j]:.3f}") 
             self.T_new[i, j] = np.clip(self.T_new[i, j], self.tmin, self.tmax)
             list_err.append(abs(self.T_new[i, j] - self.T[i, j]))
             s += self.T_new[i, j]
@@ -197,10 +199,8 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             residual_r += abs(self.T_new[i, j] + self.T_new[j, i])
             residual_s += abs(self.T_new[i, j] - self.T[i, j])
             self.lambdas[i, j] += (self.rho / 2) * (self.T_new[i, j] + self.T_new[j, i])
-            print(f"Tji =", self.T_new[j, i])
-            print(f"Tij =", self.T_new[i, j])
             bt1[i, j] = 0.5 * (self.T_new[i, j] - self.T_new[j, i]) - self.lambdas[i, j] / self.rho
-        
+            
         for j in range(n_agents):
             if j == i:
                 continue
@@ -258,7 +258,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             jid = f"agent_{neighbor}@xmpp.gecad.isep.ipp.pt"
             
             # Retrieve the T_ij value specific to this neighbor
-            T_ij = float(self.T[i, neighbor])
+            T_ij = float(self.T_new[i, neighbor])
 
             # Status message construction
             state = {
@@ -315,7 +315,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             msg.set_metadata("type", "state")  
             msg.body = json.dumps({
                 "id": i,
-                "T_ij": self.T[i, j],
+                "T_ij": self.T_new[i, j],
                 "converged": self.converged,
                 "global_converged": self.global_converged,
                 "residual_r": getattr(self, "residual_r", 1.0),
@@ -323,7 +323,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                 "iter": self.iter
             })
             await self.send(msg)
-            print(f"[{self.agent.name}] --> Envoie état à agent_{j}, T_ij = {self.T[i, j]:.3f}")
+            print(f"[{self.agent.name}] --> Envoie état à agent_{j}, T_ij = {self.T_new[i, j]:.3f}")
     
     async def send_exchange_to_agent_0(self, i):
         if i == 0:
@@ -336,7 +336,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             msg.body = json.dumps({
                     "from": i,
                     "to": j,
-                    "T_ij": self.T[i, j]
+                    "T_ij": self.T_new[i, j]
             })
             await self.send(msg)
             print(f"[{self.agent.name}] --> Sent T[{i},{j}] to agent_0 : {self.T[i,j]}")
@@ -494,7 +494,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                 if self.converged:
                     self.last_state = {
                         "id": i,
-                        "T_ij": self.T[i].tolist(),
+                        "T_ij": self.T_new[i].tolist(),
                         "converged": True,
                         "global_converged": False,
                         "residual_r": self.residual_r,

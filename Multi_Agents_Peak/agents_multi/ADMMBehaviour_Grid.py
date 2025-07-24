@@ -50,7 +50,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
         self.required_stable_iters = 3
         
     async def on_start(self):
-        model_path = os.path.join(os.path.dirname(__file__), "..", "agents_multi_test2/best_model")
+        model_path = os.path.join(os.path.dirname(__file__), "..", "agents_multi/best_model")
         print(f"[{self.agent.name}] Loading SAC model from: {model_path}")
         self.rl_model = SAC.load(model_path)
     
@@ -131,7 +131,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                             T_ij = data["T_ij"]
                             if isinstance(T_ij, list):
                                 raise ValueError(f"T_ij received is a list : {T_ij}")
-                            self.T[j, i] = - float(T_ij)
+                            self.T_new[j, i] = float(T_ij)
 
                             self.neighbor_status[j] = data.get("converged", False)
                             self.neighbor_global_status[j] = data.get("global_converged", False)
@@ -153,20 +153,20 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                             # Message state useless now, but useful later
                             self.agent._custom_buffer.append(msg)
                     except Exception as e:
-                        print(f"[{self.agent.name}] !!! Erreur traitement message state : {e}")
+                        print(f"[{self.agent.name}] !!! Message processing error state : {e}")
                         return False
 
                 elif msg_type == "ack":
                     pass
 
                 else:
-                    print(f"[{self.agent.name}] !!! Type inconnu, mis en buffer : {msg}")
+                    print(f"[{self.agent.name}] !!! Unknown type, buffered : {msg}")
                     self.agent._custom_buffer.append(msg)
 
             else:
                 timeout_counter += 1
                 if timeout_counter >= max_timeouts:
-                    print(f"[{self.agent.name}]  Réception interrompue après {max_timeouts} timeouts.")
+                    print(f"[{self.agent.name}]  Reception interrupted after {max_timeouts} timeouts.")
                     return False
                 
         return True
@@ -180,7 +180,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
 
         for j in self.neighbors:
             bt2 = self.T[i, j] - self.t_mean + self.p - self.mu
-            self.T_new[i, j] = (self.rho * bt1[i, j] + bt2 * self.rhol - self.gamma[i, j]) / (self.rho + self.rhol)
+            self.T_new[i, j] = (self.rho * bt1[i, j] + bt2 * self.rhol - self.gamma[i, j]) / (self.rho + self.rhol)  
             self.T_new[i, j] = np.clip(self.T_new[i, j], self.tmin, self.tmax)
             list_err.append(abs(self.T_new[i, j] - self.T[i, j]))
             s += self.T_new[i, j]
@@ -208,10 +208,8 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             residual_r += abs(self.T_new[i, j] + self.T_new[j, i])
             residual_s += abs(self.T_new[i, j] - self.T[i, j])
             self.lambdas[i, j] += (self.rho / 2) * (self.T_new[i, j] + self.T_new[j, i])
-            print(f"Tji =", self.T_new[j, i])
-            print(f"Tij =", self.T_new[i, j])
             bt1[i, j] = 0.5 * (self.T_new[i, j] - self.T_new[j, i]) - self.lambdas[i, j] / self.rho
-        
+            
         for j in range(n_agents):
             if j == i:
                 continue
@@ -269,7 +267,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             jid = f"agent_{neighbor}@xmpp.gecad.isep.ipp.pt"
             
             # Retrieve the T_ij value specific to this neighbor
-            T_ij = float(self.T[i, neighbor])
+            T_ij = float(self.T_new[i, neighbor])
 
             # Status message construction
             state = {
@@ -318,7 +316,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             msg.set_metadata("type", "state")  
             msg.body = json.dumps({
                 "id": i,
-                "T_ij": self.T[i, j],
+                "T_ij": self.T_new[i, j],
                 "converged": self.converged,
                 "global_converged": self.global_converged,
                 "residual_r": getattr(self, "residual_r", 1.0),
@@ -338,10 +336,10 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             msg.body = json.dumps({
                     "from": i,
                     "to": j,
-                    "T_ij": self.T[i, j]
+                    "T_ij": self.T_new[i, j]
             })
             await self.send(msg)
-            print(f"[{self.agent.name}] --> Sent T[{i},{j}] to agent_0 : {self.T[i,j]}")
+            print(f"[{self.agent.name}] --> Sent T[{i},{j}] to agent_0 : {self.T_new[i,j]}")
 
     async def receive_power_requests(self, expected_count):
         exchanges = {}
@@ -393,8 +391,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                 if msg_type == "final_exchange":
                     try:
                         data = json.loads(msg.body)
-                        T_final = np.array(data["T_final"])
-                        print(f"[{self.agent.name}] T_final received from agent_0.")
+                        T_final = np.array(data["T_final"])                        
                         return T_final
                     except Exception as e:
                         print(f"[{self.agent.name}] T_final parsing error : {e}")
@@ -404,16 +401,10 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                     buffer.append(msg)  
             else:
                 print(f"[{self.agent.name}] Still waiting for T_final...")
-                
-    # def update_gamma_policy(self):
-    #     self.gamma_policy = {
-    #         1: 0.1,
-    #         2: -0.1
-    #     }
         
     def _get_obs(self, T, prices):
         # Take only agents ≠ 0
-        T = T[1:, 1:]*self.n_agents
+        T = T[1:, 1:]
         prices = prices[1:, 1:]
 
         return np.concatenate([
@@ -425,13 +416,14 @@ class ADMMBehaviour_Test(OneShotBehaviour):
         ]).astype(np.float32)
 
     def update_gamma_policy(self, i):
-        obs = self._get_obs(self.T, self.lambdas)
+        obs = self._get_obs(self.T_new, self.lambdas)
         print(f"[Agent {i}] Observations for RL: {obs}")
 
         # Prediction of actions by the RL model
         action, _ = self.rl_model.predict(obs, deterministic=True)
         
         gamma_matrix = 0.5 * (action + action.T)
+        # gamma_matrix = np.zeros_like(gamma_matrix) 
         np.fill_diagonal(gamma_matrix, 0.0)
         
         print(f"[Agent {i}] New gamma matrix:\n{gamma_matrix}")
@@ -514,7 +506,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                 if self.converged:
                     self.last_state = {
                         "id": i,
-                        "T_ij": self.T[i].tolist()*self.n_agents,
+                        "T_ij": self.T_new[i].tolist(),
                         "converged": True,
                         "global_converged": False,
                         "residual_r": self.residual_r,
@@ -549,6 +541,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             await self.send_exchange_to_agent_0(i)
             
             T_final = await self.wait_for_T_final()
+            
             if T_final is not None:
                 bt1, r, s = await self.global_update_phase(i, T_final)
             else: 

@@ -12,14 +12,14 @@ from stable_baselines3 import SAC
 
 # Loads the standardised driven env
 env = DummyVecEnv([lambda: PeerToPeerMarketEnv()])
-env = VecNormalize.load("best_agent_PPL/vecnormalize.pkl", env)
+env = VecNormalize.load("logs/best_model/vecnormalize.pkl", env)
 # env = VecNormalize.load("logs/best_model/vecnormalize.pkl", env)
 
 # Very important: ensure that the normalisation stats never change again
 env.training = False
 env.norm_reward = False
 obs = env.reset()
-model = SAC.load("best_agent_PPL/sac_model")
+model = SAC.load("logs/best_model/sac_model")
 # model = SAC.load("logs/best_model/best_model")
 
 # Market parameters

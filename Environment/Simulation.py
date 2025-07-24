@@ -25,7 +25,7 @@ model = SAC.load("logs/best_model/sac_model")
 # Market parameters
 
 n_agents = 2
-P_l_bar = 5 
+P_l_bar = 3
 
 verbose = True
 
@@ -89,6 +89,7 @@ max_gamma = 500  # Maximum value for gamma normalization
 
 T_history = []  # List for storing the T matrix at each iteration
 Pl_history_rl = []
+local_prices_history = []    
 
 # --- Dynamic loop with gamma update ---
 while error > max_error and step < max_iters:
@@ -106,6 +107,7 @@ while error > max_error and step < max_iters:
     )
     
     T_history.append(T.copy())
+    local_prices_history.append(local_prices.copy())
 
     # --- Calculation of an indicator: P_l (exchange with the network) ---
     Pl = np.sum(np.abs(T[:, -1]))
@@ -135,6 +137,7 @@ error_0 = 2 * max_error
 
 T_0_history = []  # List for storing the T matrix at each iteration
 Pl_history = []  # List for storing the P_l values at each iteration
+local_prices_0_history = []   # Wihtout signal
 
 # --- Dynamic loop ---    
 while error_0 > max_error and step_0 < max_iters:
@@ -152,6 +155,7 @@ while error_0 > max_error and step_0 < max_iters:
     )
     
     T_0_history.append(T.copy())
+    local_prices_0_history.append(local_prices_0.copy())
 
     # --- Calculation of an indicator: P_l (exchange with the network) ---
     Pl_0 = np.sum(np.abs(T_0[:, -1]))
@@ -235,5 +239,34 @@ plt.xlabel("Iterations")
 plt.ylabel("Total power exchanged with the DSO")
 plt.title("Comparison of P_l with and without a price signal")
 plt.legend()
+plt.tight_layout()
+plt.show()
+
+local_prices_history = np.array(local_prices_history)         
+local_prices_0_history = np.array(local_prices_0_history)
+
+plt.figure(figsize=(10, 6))
+plt.plot(iterations, local_prices_history[:, 0, 1], label="Price Agent 0 ↔ Agent 1")
+plt.plot(iterations, local_prices_history[:, 0, -1], label="Price Agent 0 ↔ DSO")
+plt.plot(iterations, local_prices_history[:, 1, -1], label="Price Agent 1 ↔ DSO")
+
+plt.xlabel("Iterations")
+plt.ylabel("Local price")
+plt.title("Price Evolution (with price signal)")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(10, 6))
+plt.plot(iterations_0, local_prices_0_history[:, 0, 1], label="Price Agent 0 ↔ Agent 1")
+plt.plot(iterations_0, local_prices_0_history[:, 0, -1], label="Price Agent 0 ↔ DSO")
+plt.plot(iterations_0, local_prices_0_history[:, 1, -1], label="Price Agent 1 ↔ DSO")
+
+plt.xlabel("Iterations")
+plt.ylabel("Local price")
+plt.title("Price evolution (without price signal)")
+plt.legend()
+plt.grid(True)
 plt.tight_layout()
 plt.show()

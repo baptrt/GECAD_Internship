@@ -180,6 +180,8 @@ print("\n Simulation of the market without local prices pertubation ended succes
 
 print("Simulation ended successfully!")
 
+plt.rcParams.update({'font.size': 14}) # Size
+
 T_history = np.array(T_history)  # Shape: (steps, n_agents+1, n_agents+1)
 T_0_history = np.array(T_0_history)  # Shape: (steps, n_agents+1, n_agents+1)
 

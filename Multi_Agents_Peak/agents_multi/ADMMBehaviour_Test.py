@@ -5,7 +5,7 @@ import json
 import asyncio
 
 class ADMMBehaviour_Test(OneShotBehaviour):
-    def __init__(self, a, b, n_agents, tmin, tmax, pmin, pmax, neighbors, rho, rhol, max_iters=500, max_error=1e-3):
+    def __init__(self, a, b, n_agents, tmin, tmax, pmin, pmax, neighbors, rho, rhol, max_iters=500, max_error=1e-1):
         super().__init__()
         self.a = a
         self.b = b

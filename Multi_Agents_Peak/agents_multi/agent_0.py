@@ -11,6 +11,6 @@ class agent_0(Agent):
         }
         behaviour = Agent0Behaviour(
             n_agents=4,
-            max_error=1e-1,
+            max_error=1e-1
         )
         self.add_behaviour(behaviour)

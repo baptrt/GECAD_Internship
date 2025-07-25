@@ -2,6 +2,8 @@ from spade.behaviour import OneShotBehaviour
 from spade.message import Message
 import numpy as np
 import json
+import csv
+import os
 
 class Agent0Behaviour(OneShotBehaviour):
     def __init__(self, n_agents, max_error):
@@ -10,6 +12,8 @@ class Agent0Behaviour(OneShotBehaviour):
         self.exchanges = {}
         self.residual = [1.0]
         self.max_error = max_error
+        self.P_l_evolution = []  
+        self.iteration = 0       
 
     async def receive_power_requests(self):
         
@@ -91,11 +95,13 @@ class Agent0Behaviour(OneShotBehaviour):
             self.prev_exchanges[(i, j)] = Tij
             self.prev_exchanges[(j, i)] = Tji
 
+        P_l = np.sum(np.abs(T_final[:, -1]))
+        
         print(f"[{self.agent.name}] --- Matrix T_final calculated :\n{T_final}")
-        print(f"[{self.agent.name}] --- P_l: {np.sum(np.abs(T_final[:, -1])):.6f}")
+        print(f"[{self.agent.name}] --- P_l: {P_l:.6f}")
         
         residual = max(list_residuals) if list_residuals else float("inf")
-        return T_final, residual
+        return T_final, residual, P_l
 
     async def send_final_exchanges(self, T_final):
         for i in range(1, self.n_agents):  
@@ -142,8 +148,27 @@ class Agent0Behaviour(OneShotBehaviour):
                 print(f"[{self.agent.name}] !!! Failure to receive exchanges.")
                 return
 
-            T_final, residual = self.compute_mean_exchanges()
+            T_final, residual, P_l = self.compute_mean_exchanges()
+            self.P_l_evolution.append((self.iteration, P_l))
+            self.iteration += 1
+            
             await self.send_final_exchanges(T_final)
             self.residual.append(residual)
             print(f"[{self.agent.name}] --> Behaviour terminated.")
+            
+            if residual < self.max_error:
+                print(f"[{self.agent.name}] --- Residual {residual:.6f} < max_error {self.max_error:.6f}. Stopping.")
+                break
+            
+        # Export 
+        csv_filename = "P_l_evolution.csv"
+
+        with open(csv_filename, mode="w", newline="") as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(["Iteration", "P_l"])
+            for iteration, P_l in self.P_l_evolution:
+                writer.writerow([iteration, P_l])
+
+        print(f"[{self.agent.name}] --- Data saved '{csv_filename}'.")
+
         

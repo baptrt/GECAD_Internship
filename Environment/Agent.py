@@ -199,6 +199,6 @@ def initialize_test_2():
                     else:
                         agent.add_neighbor(other)     
 
-    return agents, a, b, tmin, tmax, pmin, pmax 
+    return agents, a, b, tmin, tmax, pmin, pmax
 
     

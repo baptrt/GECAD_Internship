@@ -239,7 +239,7 @@ plt.grid(True, which='minor', linestyle=':', linewidth=0.4, alpha=0.5)
 
 plt.xlabel("Iterations")
 plt.ylabel("Total power exchanged with the DSO")
-plt.title("Comparison of P_l with and without a price signal")
+plt.title("Comparison with and without a price signal")
 plt.legend()
 plt.tight_layout()
 plt.show()

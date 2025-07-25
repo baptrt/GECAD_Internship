@@ -218,3 +218,37 @@ class PeerToPeerMarketEnv(gym.Env):
         reward = reward_energy - delta * gamma_delta
 
         return reward
+
+    def _compute_reward_lin(self, T):
+        # Power exchanged with the grid
+        P_l = np.sum(np.abs(T[:, -1]))
+        P_l_bar = 3.0
+
+        # Weighting coefficients
+        alpha = 0.0  # gamma standard penalty
+        beta = 1    # weight on total energy
+        delta = 0.01  # gamma variation penalty
+
+        # Gamma standard
+        gamma_norm = np.linalg.norm(self.last_gamma) / ((self.n_agents + 1) ** 2)
+
+        # Variation in gamma compared with the previous step
+        if hasattr(self, "prev_gamma"):
+            gamma_delta = np.linalg.norm(self.last_gamma - self.prev_gamma) / ((self.n_agents + 1) ** 2)
+        else:
+            gamma_delta = 0.0
+
+        # Update of prev_gamma
+        self.prev_gamma = self.last_gamma.copy()
+
+        # Reward components
+        margin = P_l - P_l_bar
+        if margin <= 0:
+            reward_energy = + beta * (P_l) / P_l_bar
+        else:
+            reward_energy = - beta * (margin) / P_l_bar
+        
+        reward = reward_energy #- delta * gamma_delta
+
+        return reward
+

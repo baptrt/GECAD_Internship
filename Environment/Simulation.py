@@ -6,6 +6,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
 
 from RL import PeerToPeerMarketEnv  
 from stable_baselines3 import SAC
@@ -272,3 +273,21 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.show()
+
+# Save P_l values WITH price signal (RL)
+with open("Pl_history_with_signal.csv", mode="w", newline="") as file_rl:
+    writer = csv.writer(file_rl)
+    writer.writerow(["Iteration", "P_l_with_signal"])
+    for i, pl in enumerate(Pl_history_rl):
+        writer.writerow([i, pl])
+
+# Save P_l values WITHOUT price signal
+with open("Pl_history_without_signal.csv", mode="w", newline="") as file_no_signal:
+    writer = csv.writer(file_no_signal)
+    writer.writerow(["Iteration", "P_l_without_signal"])
+    for i, pl in enumerate(Pl_history):
+        writer.writerow([i, pl])
+
+print("CSV files exported:")
+print("  - Pl_history_with_signal.csv")
+print("  - Pl_history_without_signal.csv")

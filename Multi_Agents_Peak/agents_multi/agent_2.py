@@ -25,6 +25,6 @@ class agent_2(Agent):
             rho=10.0,
             rhol=1.0,
             max_iters=100,
-            max_error=1e-1
+            max_error=1e-3
         )
         self.add_behaviour(behaviour)

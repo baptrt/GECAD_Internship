@@ -7,7 +7,7 @@ import os
 from stable_baselines3 import SAC
 
 class ADMMBehaviour_Test(OneShotBehaviour):
-    def __init__(self, a, b, n_agents, tmin, tmax, pmin, pmax, neighbors, rho, rhol, max_iters=500, max_error=1e-1):
+    def __init__(self, a, b, n_agents, tmin, tmax, pmin, pmax, neighbors, rho, rhol, max_iters=500, max_error=1e-3):
         super().__init__()
         self.a = a
         self.b = b

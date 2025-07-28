@@ -110,7 +110,6 @@ for run in range(n_runs):
         Pl_history_rl.append(Pl)
         step += 1
 
-    # Ajoute padding si la simulation s'arrête avant max_length
     while len(Pl_history_rl) < max_length:
         Pl_history_rl.append(Pl_history_rl[-1])
 
@@ -145,7 +144,6 @@ for run in range(n_runs):
 
     all_Pl_without_signal.append(Pl_history)
 
-# Conversion en arrays
 all_Pl_with_signal = np.array(all_Pl_with_signal)       # (n_runs, max_length)
 all_Pl_without_signal = np.array(all_Pl_without_signal) # (n_runs, max_length)
 
@@ -158,24 +156,19 @@ min_without_signal = np.min(all_Pl_without_signal, axis=0)
 max_without_signal = np.max(all_Pl_without_signal, axis=0)
 
 iterations = np.arange(max_length)
-# ----- Tracé graphique avec annotations -----
+
 plt.figure(figsize=(10, 6))
 
-# Courbe moyenne + enveloppe (avec signal)
 plt.plot(iterations, mean_with_signal, label="Mean (with price signal)", color="blue")
 plt.fill_between(iterations, min_with_signal, max_with_signal, color="blue", alpha=0.2)
 
-# Courbe moyenne + enveloppe (sans signal)
 plt.plot(iterations, mean_without_signal, label="Mean (without price signal)", color="green")
 plt.fill_between(iterations, min_without_signal, max_without_signal, color="green", alpha=0.2)
 
-# Seuil de congestion
 plt.axhline(P_l_bar, color="red", linestyle="--", label="Congestion Threshold")
 
-# Dernière itération
 last_idx = max_length - 1
 
-# Annotation avec signal
 plt.annotate(
     f"With signal:\nMean={mean_with_signal[last_idx]:.2f}\nMin={min_with_signal[last_idx]:.2f}\nMax={max_with_signal[last_idx]:.2f}",
     xy=(last_idx, mean_with_signal[last_idx]),
@@ -185,7 +178,6 @@ plt.annotate(
     bbox=dict(boxstyle="round", facecolor="white", alpha=0.7)
 )
 
-# Annotation sans signal
 plt.annotate(
     f"Without signal:\nMean={mean_without_signal[last_idx]:.2f}\nMin={min_without_signal[last_idx]:.2f}\nMax={max_without_signal[last_idx]:.2f}",
     xy=(last_idx, mean_without_signal[last_idx]),
@@ -195,7 +187,6 @@ plt.annotate(
     bbox=dict(boxstyle="round", facecolor="white", alpha=0.7)
 )
 
-# Titres et légende
 plt.xlabel("Iterations")
 plt.ylabel("Total power exchanged with DSO (a.u.)")
 plt.title(f"Average of {n_runs} simulations")

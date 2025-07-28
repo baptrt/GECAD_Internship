@@ -30,7 +30,7 @@ class Agent0Behaviour(OneShotBehaviour):
         expected_msgs = (self.n_agents - 1)*2 - len(msgs)
         received_msgs = len(msgs)
 
-
+        counter = 0
         while received_msgs < expected_msgs:
             msg = await self.receive(timeout=10)
 
@@ -49,6 +49,20 @@ class Agent0Behaviour(OneShotBehaviour):
 
                 except Exception as e:
                     print(f"[{self.agent.name}] ()()() Parsing error : {e}")
+                    
+            elif msg and msg.get_metadata("type") == "convergence_check":
+                data = json.loads(msg.body)
+                convergence = bool(data["converged"])
+                if convergence:
+                    csv_filename = "P_l_evolution.csv"
+
+                    with open(csv_filename, mode="w", newline="") as csv_file:
+                        writer = csv.writer(csv_file)
+                        writer.writerow(["Iteration", "P_l"])
+                        for iteration, P_l in self.P_l_evolution:
+                            writer.writerow([iteration, P_l])
+
+                    print(f"[{self.agent.name}] --- Data saved '{csv_filename}'.")
 
             else:
                 print(f"[{self.agent.name}] !!! Timeout/Msg invalid - I'm still waiting...")
@@ -159,16 +173,3 @@ class Agent0Behaviour(OneShotBehaviour):
             if residual < self.max_error:
                 print(f"[{self.agent.name}] --- Residual {residual:.6f} < max_error {self.max_error:.6f}. Stopping.")
                 break
-            
-        # Export 
-        csv_filename = "P_l_evolution.csv"
-
-        with open(csv_filename, mode="w", newline="") as csv_file:
-            writer = csv.writer(csv_file)
-            writer.writerow(["Iteration", "P_l"])
-            for iteration, P_l in self.P_l_evolution:
-                writer.writerow([iteration, P_l])
-
-        print(f"[{self.agent.name}] --- Data saved '{csv_filename}'.")
-
-        

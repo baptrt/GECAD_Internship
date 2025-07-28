@@ -193,7 +193,7 @@ for i in range(n_agents):
     plt.plot(iterations, T_history[:, i, -1], label=f"Agent {i} → DSO")
 
 plt.xlabel("Iterations")
-plt.ylabel("Power exchanged with the DSO")
+plt.ylabel("Power exchanged with the DSO (a.u.)")
 plt.title("Evolution of power exchanged per agent with the DSO (with price signal)")
 plt.legend()
 plt.grid(True)
@@ -216,18 +216,18 @@ final_Pl_no_signal = Pl_history[-1]
 
 # Draw the two curves 
 plt.figure(figsize=(10, 6))
-plt.plot(iterations_rl, Pl_history_rl, label="P_l with signal (RL)", color="blue", marker='x', markersize=6, linestyle='-')
-plt.plot(iterations_no_signal, Pl_history, label="P_l without signal", color="green", marker='x', markersize=6, linestyle='-')
-plt.axhline(P_l_bar, color="red", linestyle="--", label="P_l_max (Aimed Value)")
+plt.plot(iterations_rl, Pl_history_rl, label="Market with Price Signal", color="blue", marker='x', markersize=6, linestyle='-')
+plt.plot(iterations_no_signal, Pl_history, label="Market with Price Signal", color="green", marker='x', markersize=6, linestyle='-')
+plt.axhline(P_l_bar, color="red", linestyle="--", label="Congestion Treshold", linewidth=1.5)
 
 # Add annotations for final values
-plt.annotate(f"Final P_l (Signal) = {final_Pl_rl:.2f}", 
+plt.annotate(f"{final_Pl_rl:.2f} a.u.", 
              xy=(final_iter_rl, final_Pl_rl), 
              xytext=(final_iter_rl - 5, final_Pl_rl + 1),
              arrowprops=dict(arrowstyle="->", color='blue'),
              fontsize=10, color='blue')
 
-plt.annotate(f"Final P_l (No Signal) = {final_Pl_no_signal:.2f}", 
+plt.annotate(f"{final_Pl_no_signal:.2f} a.u.", 
              xy=(final_iter_no_signal, final_Pl_no_signal), 
              xytext=(final_iter_no_signal - 5, final_Pl_no_signal + 1),
              arrowprops=dict(arrowstyle="->", color='green'),
@@ -239,7 +239,7 @@ plt.minorticks_on()
 plt.grid(True, which='minor', linestyle=':', linewidth=0.4, alpha=0.5)
 
 plt.xlabel("Iterations")
-plt.ylabel("Total power exchanged with the DSO")
+plt.ylabel("Total power exchanged with the DSO (a.u.)")
 plt.title("Comparison with and without a price signal")
 plt.legend()
 plt.tight_layout()

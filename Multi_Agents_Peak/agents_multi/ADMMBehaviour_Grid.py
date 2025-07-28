@@ -340,6 +340,17 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             })
             await self.send(msg)
             print(f"[{self.agent.name}] --> Sent T[{i},{j}] to agent_0 : {self.T_new[i,j]}")
+            
+        if self.global_converged == True :
+            for j in self.neighbors: 
+                msg = Message(to="agent_0@xmpp.gecad.isep.ipp.pt")
+                msg.set_metadata("performative", "inform")
+                msg.set_metadata("type", "convergence_check")
+                msg.body = json.dumps({
+                        "converged": self.global_converged
+                })
+                await self.send(msg)
+                print(f"[{self.agent.name}] --> Sent convergence check to agent_0 : {self.global_converged}")
 
     async def receive_power_requests(self, expected_count):
         exchanges = {}
@@ -597,6 +608,15 @@ class ADMMBehaviour_Test(OneShotBehaviour):
         print(f"[{self.agent.name}] Final power: p = {self.p:.3f}")
         print(f"[{self.agent.name}] Final exchanges: T = {self.agent.results['T_i']}")
         print(f"[{self.agent.name}] xxx All the neighbours have converged globally. Stop.")
+        
+        msg = Message(to="agent_0@xmpp.gecad.isep.ipp.pt")
+        msg.set_metadata("performative", "inform")
+        msg.set_metadata("type", "convergence_check")
+        msg.body = json.dumps({
+                "converged": True
+        })
+        await self.send(msg)
+        print(f"[{self.agent.name}] --> Sent convergence check to agent_0 : {True}")
         
         msg = Message(to="agent_0@xmpp.gecad.isep.ipp.pt")
         msg.set_metadata("type", "stopping")

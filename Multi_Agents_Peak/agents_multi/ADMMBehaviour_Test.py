@@ -340,7 +340,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             })
             await self.send(msg)
             print(f"[{self.agent.name}] --> Sent T[{i},{j}] to agent_0 : {self.T[i,j]}")
-
+                
     async def receive_power_requests(self, expected_count):
         exchanges = {}
         received = 0
@@ -585,6 +585,15 @@ class ADMMBehaviour_Test(OneShotBehaviour):
         
         print(f"[{self.agent.name}] Final power: p = {self.p:.3f}")
         print(f"[{self.agent.name}] xxx All the neighbours have converged globally. Stop.")
+
+        msg = Message(to="agent_0@xmpp.gecad.isep.ipp.pt")
+        msg.set_metadata("performative", "inform")
+        msg.set_metadata("type", "convergence_check")
+        msg.body = json.dumps({
+                "converged": True
+        })
+        await self.send(msg)
+        print(f"[{self.agent.name}] --> Sent convergence check to agent_0 : {True}")
         
         msg = Message(to="agent_0@xmpp.gecad.isep.ipp.pt")
         msg.set_metadata("type", "stopping")
@@ -592,3 +601,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
         self.agent.last_T = self.T 
         self.agent.last_prices = self.local_prices
         await self.send(msg)
+        
+        if error <= self.max_error:
+            print(f"[{self.agent.name}] --- Global convergence achieved with error {error:.6f}.")
+            self.global_converged = True

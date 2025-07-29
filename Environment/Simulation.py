@@ -150,7 +150,7 @@ while error_0 > max_error and step_0 < max_iters:
         print(f"\n--- Étape {step} ---")
         print("Gamma (sym):\n", np.round(gamma, 2))
         
-    gamma = update_gamma_with_rl(agents, T, local_prices, gamma, max_gamma, model)
+    # gamma = update_gamma_with_rl(agents, T, local_prices, gamma, max_gamma, model)
 
     # --- Simulation of a stage ---
     T_0, local_prices_0, bt1_0, P_0, Mu_0, T_mean_0, error_0 = simulate_market_step(
@@ -158,7 +158,7 @@ while error_0 > max_error and step_0 < max_iters:
         gamma_0, local_prices_0, rho, rhol, bt1_0, P_0, Mu_0, T_mean_0
     )
     
-    T_0_history.append(T.copy())
+    T_0_history.append(T_0.copy())
     local_prices_0_history.append(local_prices_0.copy())
 
     # --- Calculation of an indicator: P_l (exchange with the network) ---

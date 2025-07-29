@@ -258,7 +258,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             jid = f"agent_{neighbor}@xmpp.gecad.isep.ipp.pt"
             
             # Retrieve the T_ij value specific to this neighbor
-            T_ij = float(self.T_new[i, neighbor])
+            T_ij = float(self.T[i, neighbor])
 
             # Status message construction
             state = {
@@ -339,7 +339,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                     "T_ij": self.T_new[i, j]
             })
             await self.send(msg)
-            print(f"[{self.agent.name}] --> Sent T[{i},{j}] to agent_0 : {self.T[i,j]}")
+            print(f"[{self.agent.name}] --> Sent T[{i},{j}] to agent_0 : {self.T_new[i,j]}")
                 
     async def receive_power_requests(self, expected_count):
         exchanges = {}
@@ -494,7 +494,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
                 if self.converged:
                     self.last_state = {
                         "id": i,
-                        "T_ij": self.T_new[i].tolist(),
+                        "T_ij": self.T[i].tolist(),
                         "converged": True,
                         "global_converged": False,
                         "residual_r": self.residual_r,

@@ -13,6 +13,7 @@ class Agent0Behaviour(OneShotBehaviour):
         self.residual = [1.0]
         self.max_error = max_error
         self.P_l_evolution = []  
+        self.T_final_evolution = []
         self.iteration = 0       
 
     async def receive_power_requests(self):
@@ -54,7 +55,7 @@ class Agent0Behaviour(OneShotBehaviour):
                 data = json.loads(msg.body)
                 convergence = bool(data["converged"])
                 if convergence:
-                    csv_filename = "P_l_evolution.csv"
+                    csv_filename = "P_l_evolution_gamma_0.csv"
 
                     with open(csv_filename, mode="w", newline="") as csv_file:
                         writer = csv.writer(csv_file)
@@ -63,6 +64,16 @@ class Agent0Behaviour(OneShotBehaviour):
                             writer.writerow([iteration, P_l])
 
                     print(f"[{self.agent.name}] --- Data saved '{csv_filename}'.")
+                                        
+                    tfinal_csv = "T_final_evolution.csv"
+                    with open(tfinal_csv, mode="w", newline="") as f:
+                        writer = csv.writer(f)
+                        header = ["Iteration"] + [f"T_{i}_{j}" for i in range(self.n_agents) for j in range(self.n_agents)]
+                        writer.writerow(header)
+                        for iteration, T_flat in enumerate(self.T_final_evolution):
+                            writer.writerow([iteration] + list(T_flat))
+
+                    print(f"[{self.agent.name}] --- T_final_evolution.csv sauvegardé avec {len(self.T_final_evolution)} itérations.")
 
             else:
                 print(f"[{self.agent.name}] !!! Timeout/Msg invalid - I'm still waiting...")
@@ -164,6 +175,8 @@ class Agent0Behaviour(OneShotBehaviour):
 
             T_final, residual, P_l = self.compute_mean_exchanges()
             self.P_l_evolution.append((self.iteration, P_l))
+            self.T_final_evolution.append(T_final.flatten())
+     
             self.iteration += 1
             
             await self.send_final_exchanges(T_final)

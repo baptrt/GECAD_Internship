@@ -434,7 +434,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
         action, _ = self.rl_model.predict(obs, deterministic=True)
         
         gamma_matrix = 0.5 * (action + action.T)
-        # gamma_matrix = np.zeros_like(gamma_matrix) 
+        gamma_matrix = np.zeros_like(gamma_matrix) 
         np.fill_diagonal(gamma_matrix, 0.0)
         
         print(f"[Agent {i}] New gamma matrix:\n{gamma_matrix}")
@@ -567,7 +567,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             self.T = self.T_new.copy()
             
             print(f"[{self.agent.name}] Global Iter {global_iter} | Residual Error: {error:.6f}")
-            print(f"[{self.agent.name}] T[i] : {self.T[i]*self.n_agents}")
+            print(f"[{self.agent.name}] T[i] : {self.T[i]}")
             print(f"[{self.agent.name}] Lambda[i] : {self.lambdas[i]}")
             print(f"[{self.agent.name}] Local synchronisation successful, go to global update.")
             
@@ -600,7 +600,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             "role": self.agent.params["role"],
             "p": self.p,
             "mu": self.mu,
-            "T_i": np.array(self.T[i])*self.n_agents,
+            "T_i": np.array(self.T[i]),
             "lambda_i": self.lambdas[i],
             "neighbors": self.neighbors
         }

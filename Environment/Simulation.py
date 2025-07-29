@@ -12,6 +12,7 @@ from RL import PeerToPeerMarketEnv
 from stable_baselines3 import SAC
 
 # Loads the standardised driven env
+env_ = PeerToPeerMarketEnv()
 env = DummyVecEnv([lambda: PeerToPeerMarketEnv()])
 env = VecNormalize.load("logs/best_model/vecnormalize.pkl", env)
 # env = VecNormalize.load("logs/best_model/vecnormalize.pkl", env)
@@ -91,6 +92,7 @@ max_gamma = 500  # Maximum value for gamma normalization
 T_history = []  # List for storing the T matrix at each iteration
 Pl_history_rl = []
 local_prices_history = []    
+reward_history = []
 
 # --- Dynamic loop with gamma update ---
 while error > max_error and step < max_iters:
@@ -100,6 +102,8 @@ while error > max_error and step < max_iters:
         print("Gamma (sym):\n", np.round(gamma, 2))
         
     gamma = update_gamma_with_rl(agents, T, local_prices, gamma, max_gamma, model)
+    reward = env_._compute_reward(T)
+    reward_history.append(reward)
 
     # --- Simulation of a stage ---
     T, local_prices, bt1, P, Mu, T_mean, error = simulate_market_step(
@@ -120,7 +124,6 @@ while error > max_error and step < max_iters:
     print("Local Prices:\n", local_prices)
     
     step += 1
-    
     
 ###################### Simulation of the market without signal prices ######################
 T_0 = np.zeros((n_agents+1, n_agents+1)) # Matrix of power exchanges
@@ -200,6 +203,16 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
+plt.figure(figsize=(10, 6))
+plt.plot(np.arange(len(reward_history)), reward_history, label="Reward (with RL)", color="purple")
+plt.xlabel("Iterations")
+plt.ylabel("Reward")
+plt.title("Evolution of the reward during training (inference phase)")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
 # Convert history into array
 Pl_history_rl = np.array(Pl_history_rl)
 Pl_history = np.array(Pl_history)
@@ -217,7 +230,7 @@ final_Pl_no_signal = Pl_history[-1]
 # Draw the two curves 
 plt.figure(figsize=(10, 6))
 plt.plot(iterations_rl, Pl_history_rl, label="Market with Price Signal", color="blue", marker='x', markersize=6, linestyle='-')
-plt.plot(iterations_no_signal, Pl_history, label="Market with Price Signal", color="green", marker='x', markersize=6, linestyle='-')
+plt.plot(iterations_no_signal, Pl_history, label="Market without Price Signal", color="green", marker='x', markersize=6, linestyle='-')
 plt.axhline(P_l_bar, color="red", linestyle="--", label="Congestion Treshold", linewidth=1.5)
 
 # Add annotations for final values
@@ -287,7 +300,19 @@ with open("Pl_history_without_signal.csv", mode="w", newline="") as file_no_sign
     writer.writerow(["Iteration", "P_l_without_signal"])
     for i, pl in enumerate(Pl_history):
         writer.writerow([i, pl])
+        
+# Save T_0 history to CSV
+t0_final_csv = "T_0_final_evolution.csv"
+T_0_history = np.array(T_0_history)  # (steps, n_agents+1, n_agents+1)
+
+with open(t0_final_csv, mode="w", newline="") as f:
+    writer = csv.writer(f)
+    header = ["Iteration"] + [f"T_0_{i}_{j}" for i in range(n_agents + 1) for j in range(n_agents + 1)]
+    writer.writerow(header)
+    for iteration, T_mat in enumerate(T_0_history):
+        writer.writerow([iteration] + list(T_mat.flatten()))
 
 print("CSV files exported:")
 print("  - Pl_history_with_signal.csv")
 print("  - Pl_history_without_signal.csv")
+print(f"  - {t0_final_csv}")    

@@ -1,54 +1,55 @@
-% Load data
-data_spade = readtable('Multi_Agents_Peak/P_l_evolution.csv');
-data_rl = readtable('Pl_history_with_signal.csv');
-data_no_signal = readtable('Pl_history_without_signal.csv');
+% === Paramètres ===
+csv_file_tradi = 'T_0_final_evolution.csv';  
+csv_file_multi = 'Multi_Agents_Peak/T_final_evolution.csv';
+pairs_to_plot = [0 1; 1 2; 0 2];     
+n_agents = 3;                          
 
-% Extract values
-iter_spade = data_spade.Iteration;
-Pl_spade = data_spade.P_l;
+% === Lecture des fichiers CSV ===
+T_tradi = readtable(csv_file_tradi);
+T_multi = readtable(csv_file_multi);
 
-iter_rl = data_rl.Iteration;
-Pl_rl = data_rl.P_l_with_signal;
+iterations_tradi = T_tradi.Iteration;
+iterations_multi = T_multi.Iteration;
 
-iter_no_signal = data_no_signal.Iteration;
-Pl_no_signal = data_no_signal.P_l_without_signal;
-
-% Plot all three curves with updated colors
+% === Tracé des échanges T_0(i,j) ===
 figure;
-h1 = plot(iter_spade, Pl_spade, 'k-', 'LineWidth', 3); hold on;        % SPADE: black
-h2 = plot(iter_rl, Pl_rl, 'b-', 'LineWidth', 3);                       % RL: blue
-h3 = plot(iter_no_signal, Pl_no_signal, 'g-', 'LineWidth', 3);         % No signal: green
+hold on;
 
-plot(iter_spade, Pl_spade, 'kx', 'LineWidth', 1.5, 'MarkerSize', 8);   
-plot(iter_rl, Pl_rl, 'bx', 'LineWidth', 1.5, 'MarkerSize', 8);         
-plot(iter_no_signal, Pl_no_signal, 'gx', 'LineWidth', 1.5, 'MarkerSize', 8); 
+% Couleurs pour uniformiser les courbes correspondantes
+colors = lines(size(pairs_to_plot, 1));
 
-% Last values
-plot(iter_spade(end), Pl_spade(end), 'ko', 'MarkerFaceColor', 'k');
-text(iter_spade(end), Pl_spade(end), sprintf('  %.2f a.u.', Pl_spade(end)), ...
-    'Color', 'k', 'FontSize', 24, 'VerticalAlignment', 'bottom');
+% Tracé simulation traditionnelle (pointillés)
+for k = 1:size(pairs_to_plot, 1)
+    i = pairs_to_plot(k, 1);
+    j = pairs_to_plot(k, 2);
+    col_name = sprintf('T_0_%d_%d', i, j);
+    
+    if any(strcmp(T_tradi.Properties.VariableNames, col_name))
+        plot(iterations_tradi, T_tradi.(col_name), '--', ...
+            'DisplayName', sprintf('Traditionnel T_{%d→%d}', i, j), ...
+            'Color', colors(k,:));
+    else
+        warning('Colonne %s non trouvée dans le fichier traditionnel.', col_name);
+    end
+end
 
-plot(iter_rl(end), Pl_rl(end), 'bo', 'MarkerFaceColor', 'b');
-text(iter_rl(end), Pl_rl(end), sprintf('  %.2f a.u.', Pl_rl(end)), ...
-    'Color', 'b', 'FontSize', 24, 'VerticalAlignment', 'bottom');
+% Tracé simulation multi-agents (trait plein)
+for k = 1:size(pairs_to_plot, 1)
+    i = pairs_to_plot(k, 1);
+    j = pairs_to_plot(k, 2);
+    col_name = sprintf('T_%d_%d', i+1, j+1);  % même nom attendu
+    
+    if any(strcmp(T_multi.Properties.VariableNames, col_name))
+        plot(iterations_multi, T_multi.(col_name), '-', ...
+            'DisplayName', sprintf('Multi-agents T_{%d→%d}', i, j), ...
+            'Color', colors(k,:));
+    else
+        warning('Colonne %s non trouvée dans le fichier multi-agents.', col_name);
+    end
+end
 
-plot(iter_no_signal(end), Pl_no_signal(end), 'go', 'MarkerFaceColor', 'g');
-text(iter_no_signal(end), Pl_no_signal(end), sprintf('  %.2f a.u.', Pl_no_signal(end)), ...
-    'Color', 'g', 'FontSize', 24, 'VerticalAlignment', 'bottom');
-
-h4 = yline(3, 'r--', 'LineWidth', 2.5);
-
-% Labels and legend
-xlabel('Iterations');
-ylabel('Total P_l (Power exchanged with the grid)');
-title('Evolution of P_l over Iterations');
-legend([h1 h2 h3 h4], ...
-       {'Multi-Agent Market with Price Signal', ...
-        'Traditional Market with Price Signal', ...
-        'Traditional Market without Price Signal', ...
-        'Threshold P_l^{max} = 3 a.u.'}, ...
-       'FontSize', 24, 'Location', 'best');
-
+xlabel('Itération');
+ylabel('Échange T_{ij}');
+title('Comparaison des échanges d''énergie : traditionnel vs multi-agents');
+legend('Location', 'best');
 grid on;
-grid minor;
-set(gca, 'FontSize', 32);

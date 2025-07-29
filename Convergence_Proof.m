@@ -1,24 +1,24 @@
-% === Paramètres ===
+% === Parameters ===
 csv_file_tradi = 'T_0_final_evolution.csv';  
 csv_file_multi = 'Multi_Agents_Peak/T_final_evolution.csv';
 pairs_to_plot = [0 1; 1 2; 0 2];     
 n_agents = 3;                          
 
-% === Lecture des fichiers CSV ===
+% === Load CSV files ===
 T_tradi = readtable(csv_file_tradi);
 T_multi = readtable(csv_file_multi);
 
 iterations_tradi = T_tradi.Iteration;
 iterations_multi = T_multi.Iteration;
 
-% === Tracé des échanges T_0(i,j) ===
+% === Plot T(i → j) evolution ===
 figure;
 hold on;
 
-% Couleurs pour uniformiser les courbes correspondantes
+% Use consistent colors for matching (i, j) pairs
 colors = lines(size(pairs_to_plot, 1));
 
-% Tracé simulation traditionnelle (pointillés)
+% Plot traditional simulation (dashed lines)
 for k = 1:size(pairs_to_plot, 1)
     i = pairs_to_plot(k, 1);
     j = pairs_to_plot(k, 2);
@@ -26,30 +26,37 @@ for k = 1:size(pairs_to_plot, 1)
     
     if any(strcmp(T_tradi.Properties.VariableNames, col_name))
         plot(iterations_tradi, T_tradi.(col_name), '--', ...
-            'DisplayName', sprintf('Traditionnel T_{%d→%d}', i, j), ...
-            'Color', colors(k,:));
+            'DisplayName', sprintf('Traditional Market T_{%d→%d}', i + 1, j + 1), ...
+            'Color', colors(k,:), ...
+            'LineWidth', 2);
     else
-        warning('Colonne %s non trouvée dans le fichier traditionnel.', col_name);
+        warning('Column %s not found in traditional dataset.', col_name);
     end
 end
 
-% Tracé simulation multi-agents (trait plein)
+% Plot multi-agent simulation (solid lines)
 for k = 1:size(pairs_to_plot, 1)
     i = pairs_to_plot(k, 1);
     j = pairs_to_plot(k, 2);
-    col_name = sprintf('T_%d_%d', i+1, j+1);  % même nom attendu
+    col_name = sprintf('T_%d_%d', i+1, j+1);  % Adjust indexing if needed
     
     if any(strcmp(T_multi.Properties.VariableNames, col_name))
         plot(iterations_multi, T_multi.(col_name), '-', ...
-            'DisplayName', sprintf('Multi-agents T_{%d→%d}', i, j), ...
-            'Color', colors(k,:));
+            'DisplayName', sprintf('Multi-agent Market T_{%d→%d}', i, j), ...
+            'Color', colors(k,:), ...
+            'LineWidth', 2);
     else
-        warning('Colonne %s non trouvée dans le fichier multi-agents.', col_name);
+        warning('Column %s not found in multi-agent dataset.', col_name);
     end
 end
 
-xlabel('Itération');
-ylabel('Échange T_{ij}');
-title('Comparaison des échanges d''énergie : traditionnel vs multi-agents');
-legend('Location', 'best');
+% === Axis labels and styling ===
+xlabel('Iteration', 'FontSize', 14, 'FontWeight', 'bold');
+ylabel('Power exchange T_{ij}', 'FontSize', 14, 'FontWeight', 'bold');
+title('Evolution of Energy Exchanges: Traditional vs Multi-agent', ...
+       'FontSize', 16, 'FontWeight', 'bold');
+
+legend('Location', 'best', 'FontSize', 12);
 grid on;
+grid minor;
+set(gca, 'FontSize', 12, 'LineWidth', 1.2);

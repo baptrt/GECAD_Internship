@@ -50,7 +50,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
         self.required_stable_iters = 3
         
     async def on_start(self):
-        model_path = os.path.join(os.path.dirname(__file__), "..", "agents_multi/best_model")
+        model_path = os.path.join(os.path.dirname(__file__), "..", "agents_multi/best_model5")
         print(f"[{self.agent.name}] Loading SAC model from: {model_path}")
         self.rl_model = SAC.load(model_path)
     
@@ -434,7 +434,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
         action, _ = self.rl_model.predict(obs, deterministic=True)
         
         gamma_matrix = 0.5 * (action + action.T)
-        gamma_matrix = np.zeros_like(gamma_matrix) 
+        # gamma_matrix = np.zeros_like(gamma_matrix) 
         np.fill_diagonal(gamma_matrix, 0.0)
         
         print(f"[Agent {i}] New gamma matrix:\n{gamma_matrix}")
@@ -600,7 +600,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
             "role": self.agent.params["role"],
             "p": self.p,
             "mu": self.mu,
-            "T_i": np.array(self.T[i]),
+            "T_i": np.array(self.T_new[i]),
             "lambda_i": self.lambdas[i],
             "neighbors": self.neighbors
         }

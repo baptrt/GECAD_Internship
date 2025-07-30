@@ -20,6 +20,8 @@ class PeerToPeerMarketEnv(gym.Env):
         self.max_error = 1e-3  # Maximum error threshold for termination
         self.last_gamma = np.zeros(self.gamma_dim)  # Last gamma matrix
         self.verbose = verbose  # Pour activer ou désactiver les prints
+        self.obs_history = []
+        self.gamma_history = []
 
         # Observation: vector including prices and power exchanges
         self.observation_space = spaces.Box(
@@ -83,8 +85,7 @@ class PeerToPeerMarketEnv(gym.Env):
         Mu = np.zeros(self.n_agents + 1)
         T_mean = np.zeros(self.n_agents + 1)
         return T, local_prices, bt1, P, Mu, T_mean
-
-        
+     
     def step(self, action):
         self.current_step += 1
 
@@ -108,15 +109,15 @@ class PeerToPeerMarketEnv(gym.Env):
             )
 
             # Calcul du reward partiel pondéré
-            reward = self._compute_reward(self.T)
+            reward = self._compute_reward_Gaussian(self.T)
             weight = 0.1 + 0.9 * (internal_step / self.max_iters)  # poids croissant [0.1 à 1.0]
             total_reward += reward * weight
             weight_sum += weight
 
-            if self.verbose:
-                print(f"\nInternal Step {internal_step}:")
-                print(f"Gamma:\n{np.round(gamma, 2)}")
-                print(f"P_l = {np.sum(np.abs(self.T[:, -1])):.4f}")
+            # if self.verbose:
+            #     print(f"\nInternal Step {internal_step}:")
+            #     print(f"Gamma:\n{np.round(gamma, 2)}")
+            #     print(f"P_l = {np.sum(np.abs(self.T[:, -1])):.4f}")
 
             internal_step += 1
 
@@ -135,7 +136,6 @@ class PeerToPeerMarketEnv(gym.Env):
             "final_error": error,
             "current_step": self.current_step
         }
-
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -219,15 +219,16 @@ class PeerToPeerMarketEnv(gym.Env):
 
         return reward
 
-    def _compute_reward_lin(self, T):
+    def _compute_reward_epsilon(self, T):
         # Power exchanged with the grid
         P_l = np.sum(np.abs(T[:, -1]))
         P_l_bar = 3.0
 
         # Weighting coefficients
-        alpha = 0.0  # gamma standard penalty
-        beta = 1    # weight on total energy
+        alpha = 0.0  # gamma standard penalty (non utilisé ici)
+        beta = 1.0   # weight on total energy
         delta = 0.01  # gamma variation penalty
+        epsilon = 1
 
         # Gamma standard
         gamma_norm = np.linalg.norm(self.last_gamma) / ((self.n_agents + 1) ** 2)
@@ -238,17 +239,47 @@ class PeerToPeerMarketEnv(gym.Env):
         else:
             gamma_delta = 0.0
 
-        # Update of prev_gamma
+        # Update prev_gamma
         self.prev_gamma = self.last_gamma.copy()
 
-        # Reward components
-        margin = P_l - P_l_bar
-        if margin <= 0:
-            reward_energy = + beta * (P_l) / P_l_bar
+        # Reward energy component with smooth penalty near constraint
+        if P_l <= P_l_bar - epsilon:
+            reward_energy = beta * (P_l**2) / P_l_bar**2
+        elif P_l <= P_l_bar:
+            # Pénalité douce à l'approche de la contrainte
+            x = (P_l_bar - P_l) / epsilon  # x ∈ (0,1)
+            reward_energy = beta * (P_l**2) / P_l_bar**2 * x**2  # chute quadratique
         else:
-            reward_energy = - beta * (margin) / P_l_bar
-        
-        reward = reward_energy #- delta * gamma_delta
+            margin = P_l - P_l_bar
+            reward_energy = - beta * (margin**2) / P_l_bar**2
+
+        reward = reward_energy - delta * gamma_delta
 
         return reward
 
+    def _compute_reward_Gaussian(self, T):
+        # Power exchanged with the grid
+        P_l = np.sum(np.abs(T[:, -1]))
+        P_l_bar = 3.0
+        P_opt = 0.8 * P_l_bar 
+        sigma = 0.2 * P_l_bar
+
+        # Weighting coefficients
+        beta = 1.0
+        delta = 0.01
+
+        # Variation in gamma compared with previous step
+        if hasattr(self, "prev_gamma"):
+            gamma_delta = np.linalg.norm(self.last_gamma - self.prev_gamma) / ((self.n_agents + 1) ** 2)
+        else:
+            gamma_delta = 0.0
+
+        # Update prev_gamma
+        self.prev_gamma = self.last_gamma.copy()
+
+        # Reward energy: Gaussian bell centered before the constraint
+        reward_energy = beta * np.exp(-((P_l - P_opt)**2) / (2 * sigma**2))
+
+        # Final reward
+        reward = reward_energy - delta * gamma_delta
+        return reward

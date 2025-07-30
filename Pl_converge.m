@@ -1,5 +1,5 @@
 % Load data
-data_spade = readtable('Multi_Agents_Peak/P_l_evolution.csv');
+data_spade = readtable('Multi_Agents_Peak/P_l_evolution_gamma.csv');
 data_rl = readtable('Pl_history_with_signal.csv');
 data_no_signal = readtable('Pl_history_without_signal.csv');
 
@@ -39,8 +39,8 @@ text(iter_no_signal(end), Pl_no_signal(end), sprintf('  %.2f a.u.', Pl_no_signal
 h4 = yline(3, 'r--', 'LineWidth', 2.5);
 
 % Labels and legend
-xlabel('Iterations');
-ylabel('Total P_l (Power exchanged with the grid)');
+xlabel('Iterations','FontWeight','bold');
+ylabel('Total P_l (Power exchanged with the grid)','FontWeight','bold');
 title('Evolution of P_l over Iterations');
 legend([h1 h2 h3 h4], ...
        {'Multi-Agent Market with Price Signal', ...

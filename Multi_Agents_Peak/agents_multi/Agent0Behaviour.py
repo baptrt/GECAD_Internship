@@ -55,7 +55,7 @@ class Agent0Behaviour(OneShotBehaviour):
                 data = json.loads(msg.body)
                 convergence = bool(data["converged"])
                 if convergence:
-                    csv_filename = "P_l_evolution_gamma_0.csv"
+                    csv_filename = "P_l_evolution_gamma.csv"
 
                     with open(csv_filename, mode="w", newline="") as csv_file:
                         writer = csv.writer(csv_file)

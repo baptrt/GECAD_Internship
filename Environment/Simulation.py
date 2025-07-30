@@ -21,7 +21,7 @@ env = VecNormalize.load("logs/best_model/vecnormalize.pkl", env)
 env.training = False
 env.norm_reward = False
 obs = env.reset()
-model = SAC.load("logs/best_model/sac_model")
+model = SAC.load("logs/best_model/best_model")
 # model = SAC.load("logs/best_model/best_model")
 
 # Market parameters
@@ -93,9 +93,11 @@ T_history = []  # List for storing the T matrix at each iteration
 Pl_history_rl = []
 local_prices_history = []    
 reward_history = []
+gamma_history = []  # Stocke gamma à chaque itération
 
 # --- Dynamic loop with gamma update ---
 while error > max_error and step < max_iters:
+    gamma_history.append(gamma.copy())
 
     if verbose:
         print(f"\n--- Étape {step} ---")
@@ -207,7 +209,7 @@ plt.figure(figsize=(10, 6))
 plt.plot(np.arange(len(reward_history)), reward_history, label="Reward (with RL)", color="purple")
 plt.xlabel("Iterations")
 plt.ylabel("Reward")
-plt.title("Evolution of the reward during training (inference phase)")
+plt.title("Evolution of the reward")
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
@@ -285,6 +287,28 @@ plt.title("Price evolution (without price signal)")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+plt.show()
+
+gamma_history = np.array(gamma_history)  # (steps, n_agents+1, n_agents+1)
+
+n = n_agents + 1
+steps = gamma_history.shape[0]
+
+fig, axes = plt.subplots(n, n, figsize=(3 * n, 3 * n), sharex=True)
+fig.suptitle("Évolution des coefficients Gamma[i, j] par itération", fontsize=16)
+
+for i in range(n):
+    for j in range(n):
+        ax = axes[i, j]
+        ax.plot(range(steps), gamma_history[:, i, j])
+        ax.set_title(f"Gamma[{i}, {j}]")
+        ax.grid(True)
+        if i == n - 1:
+            ax.set_xlabel("Itérations")
+        if j == 0:
+            ax.set_ylabel("Valeur")
+
+plt.tight_layout(rect=[0, 0, 1, 0.97])  # Ajuste la place pour le titre
 plt.show()
 
 # Save P_l values WITH price signal (RL)

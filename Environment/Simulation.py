@@ -6,6 +6,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import csv
 
 from RL import PeerToPeerMarketEnv  
@@ -206,11 +207,14 @@ plt.tight_layout()
 plt.show()
 
 # Find the first iteration where the reward becomes negative.
+count = 0
 for i, r in enumerate(reward_history):
     if r < 0:
-        iter_reward_neg = i
-        val_reward_neg = r
-        break
+        count += 1
+        if count == 2:
+            iter_reward_neg = i
+            val_reward_neg = r
+            break
 
 plt.figure(figsize=(10, 6))
 plt.plot(np.arange(len(reward_history)), reward_history, color="purple")
@@ -249,11 +253,14 @@ final_Pl_no_signal = Pl_history[-1]
 
 # Draw the two curves 
 # Find the first crossing of the threshold
+count = 0
 for idx, (it, val) in enumerate(zip(iterations_rl, Pl_history_rl)):
     if val > P_l_bar:
-        iter_cross = it
-        val_cross = val
-        break
+        count += 1
+        if count == 2:
+            iter_cross = it
+            val_cross = val
+            break
 
 plt.figure(figsize=(10, 6))
 plt.plot(iterations_rl, Pl_history_rl, label="Market with Price Signal", color="blue", marker='x', markersize=6, linestyle='-')
@@ -328,28 +335,41 @@ gamma_history = np.array(gamma_history)  # (steps, n_agents+1, n_agents+1)
 n = n_agents + 1
 steps = gamma_history.shape[0]
 
-fig, axes = plt.subplots(n, n, figsize=(3 * n, 3 * n), sharex=True)
+fig = plt.figure(figsize=(9, 6))
 fig.suptitle("Evolution of Price Signal on i ↔ j exchanges by iteration", fontsize=16)
 
-for i in range(n):
-    for j in range(n):
-        if i > j: # Matrix is symmetric
-            ax = axes[i, j]
-            ax.plot(range(steps), gamma_history[:, i, j])
-            ax.set_title(f"Price Signal {i} ↔ {j}")
-            
-            ax.grid(True, which='major', linestyle='-', linewidth=0.5)
-            ax.minorticks_on() 
-            ax.grid(True, which='minor', linestyle=':', linewidth=0.3) 
-            
-            if i == n - 1:
-                ax.set_xlabel("Iterations")
-            if j == 0:
-                ax.set_ylabel("Value")
+gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1], width_ratios=[1, 1], hspace=0.5)
 
-plt.tight_layout(rect=[0, 0, 1, 0.97]) 
+ax1 = fig.add_subplot(gs[0, 0])
+ax1.plot(range(steps), gamma_history[:, 2, 0])
+ax1.set_title("Price Signal 2 ↔ 0")
+ax1.set_xlabel("Iterations")
+ax1.set_ylabel("Value")
+ax1.grid(True, which='major', linestyle='-', linewidth=0.5)
+ax1.minorticks_on()
+ax1.grid(True, which='minor', linestyle=':', linewidth=0.3)
+
+ax2 = fig.add_subplot(gs[0, 1])
+ax2.plot(range(steps), gamma_history[:, 1, 0])
+ax2.set_title("Price Signal 1 ↔ 0")
+ax2.set_xlabel("Iterations")
+ax2.set_ylabel("Value")
+ax2.grid(True, which='major', linestyle='-', linewidth=0.5)
+ax2.minorticks_on()
+ax2.grid(True, which='minor', linestyle=':', linewidth=0.3)
+
+gs_bottom = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[1, :], wspace=0.5)
+ax3 = fig.add_subplot(gs_bottom[0])
+ax3.plot(range(steps), gamma_history[:, 2, 1])
+ax3.set_title("Price Signal 2 ↔ 1")
+ax3.set_xlabel("Iterations")
+ax3.set_ylabel("Value")
+ax3.grid(True, which='major', linestyle='-', linewidth=0.5)
+ax3.minorticks_on()
+ax3.grid(True, which='minor', linestyle=':', linewidth=0.3)
+
+plt.tight_layout(rect=[0, 0, 1, 0.95])
 plt.show()
-
 # Save P_l values WITH price signal (RL)
 with open("Pl_history_with_signal.csv", mode="w", newline="") as file_rl:
     writer = csv.writer(file_rl)

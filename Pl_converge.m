@@ -40,8 +40,8 @@ h4 = yline(3, 'r--', 'LineWidth', 2.5);
 
 % Labels and legend
 xlabel('Iterations','FontWeight','bold');
-ylabel('Total P_l (Power exchanged with the grid)','FontWeight','bold');
-title('Evolution of P_l over Iterations');
+ylabel('Total power exchanged with the DSO (a.u.)','FontWeight','bold');
+title('Evolution of Power Exchanged over Iterations');
 legend([h1 h2 h3 h4], ...
        {'Multi-Agent Market with Price Signal', ...
         'Traditional Market with Price Signal', ...

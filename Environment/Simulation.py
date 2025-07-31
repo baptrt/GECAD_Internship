@@ -22,7 +22,7 @@ env = VecNormalize.load("logs/best_model/vecnormalize.pkl", env)
 env.training = False
 env.norm_reward = False
 obs = env.reset()
-model = SAC.load("logs/best_model/best_model")
+model = SAC.load("logs/best_model/sac_model")
 # model = SAC.load("logs/best_model/best_model")
 
 # Market parameters
@@ -105,7 +105,7 @@ while error > max_error and step < max_iters:
         print("Gamma (sym):\n", np.round(gamma, 2))
         
     gamma = update_gamma_with_rl(agents, T, local_prices, gamma, max_gamma, model)
-    reward = env_._compute_reward(T)
+    reward = env_._compute_reward_epsilon(T)
     reward_history.append(reward)
 
     # --- Simulation of a stage ---
@@ -196,44 +196,13 @@ iterations = np.arange(T_history.shape[0])
 iterations_0 = np.arange(T_0_history.shape[0])
 
 for i in range(n_agents):
-    plt.plot(iterations, T_history[:, i, -1], label=f"Agent {i} → DSO")
+    plt.plot(iterations[1:], T_history[1:, i, -1], label=f"Agent {i} → DSO")
 
 plt.xlabel("Iterations")
 plt.ylabel("Power exchanged with the DSO (a.u.)")
 plt.title("Evolution of power exchanged per agent with the DSO (with price signal)")
 plt.legend()
 plt.grid(True)
-plt.tight_layout()
-plt.show()
-
-# Find the first iteration where the reward becomes negative.
-count = 0
-for i, r in enumerate(reward_history):
-    if r < 0:
-        count += 1
-        if count == 2:
-            iter_reward_neg = i
-            val_reward_neg = r
-            break
-
-plt.figure(figsize=(10, 6))
-plt.plot(np.arange(len(reward_history)), reward_history, color="purple")
-plt.axvline(x=iter_reward_neg, color='red', linestyle='--', linewidth=1.2, label="Reward becomes negative")
-plt.plot(iter_reward_neg, val_reward_neg, marker='*', color='red', markersize=12, label="Negative Reward Onset")
-plt.annotate(f"Negative reward\nstarts here ({iter_reward_neg})",
-             xy=(iter_reward_neg, val_reward_neg),
-             xytext=(iter_reward_neg + 3, val_reward_neg - 1),
-             arrowprops=dict(arrowstyle="->", color='red'),
-             fontsize=10, color='red')
-
-plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
-plt.minorticks_on()
-plt.grid(True, which='minor', linestyle=':', linewidth=0.4, alpha=0.5)
-
-plt.xlabel("Iterations")
-plt.ylabel("Reward")
-plt.title("Evolution of the reward")
-plt.legend()
 plt.tight_layout()
 plt.show()
 
@@ -250,8 +219,7 @@ final_iter_rl = iterations_rl[-1]
 final_iter_no_signal = iterations_no_signal[-1]
 final_Pl_rl = Pl_history_rl[-1]
 final_Pl_no_signal = Pl_history[-1]
-
-# Draw the two curves 
+        
 # Find the first crossing of the threshold
 count = 0
 for idx, (it, val) in enumerate(zip(iterations_rl, Pl_history_rl)):
@@ -263,11 +231,26 @@ for idx, (it, val) in enumerate(zip(iterations_rl, Pl_history_rl)):
             break
 
 plt.figure(figsize=(10, 6))
-plt.plot(iterations_rl, Pl_history_rl, label="Market with Price Signal", color="blue", marker='x', markersize=6, linestyle='-')
+plt.plot(np.arange(len(reward_history)-2), reward_history[2:], color="blue")
+plt.axvline(x=iter_cross, color='black', linestyle='--', linewidth=1.2, label="Limit of negative rewards")
+
+plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+plt.minorticks_on()
+plt.grid(True, which='minor', linestyle=':', linewidth=0.4, alpha=0.5)
+
+plt.xlabel("Iterations")
+plt.ylabel("Reward")
+plt.title("Evolution of the reward")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Draw the two curves 
+plt.figure(figsize=(10, 6))
+plt.plot(iterations_rl[1:], Pl_history_rl[1:], label="Market with Price Signal", color="blue", marker='x', markersize=6, linestyle='-')
 plt.plot(iterations_no_signal, Pl_history, label="Market without Price Signal", color="green", marker='x', markersize=6, linestyle='-')
 plt.axhline(P_l_bar, color="red", linestyle="--", label="Congestion Treshold", linewidth=1.5)
-plt.axvline(x=iter_cross, color='purple', linestyle='--', linewidth=1.2, label="First Threshold Crossing")
-plt.plot(iter_cross, val_cross, marker='*', markersize=12, color='black', label="Crossing Point")
+plt.axvline(x=iter_cross, color='black', linestyle='--', linewidth=1.2, label="Threshold Violation")
 
 # Add annotations for final values
 plt.annotate(f"{final_Pl_rl:.2f} a.u.", 
@@ -281,13 +264,6 @@ plt.annotate(f"{final_Pl_no_signal:.2f} a.u.",
              xytext=(final_iter_no_signal - 5, final_Pl_no_signal + 1),
              arrowprops=dict(arrowstyle="->", color='green'),
              fontsize=10, color='green')
-
-plt.annotate("Threshold crossed", 
-             xy=(iter_cross, val_cross), 
-             xytext=(iter_cross + 2, val_cross + 1),
-             arrowprops=dict(arrowstyle="->", color='purple'),
-             fontsize=10, color='purple')
-
 
 # Refined grid pattern
 plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
@@ -341,7 +317,7 @@ fig.suptitle("Evolution of Price Signal on i ↔ j exchanges by iteration", font
 gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1], width_ratios=[1, 1], hspace=0.5)
 
 ax1 = fig.add_subplot(gs[0, 0])
-ax1.plot(range(steps), gamma_history[:, 2, 0])
+ax1.plot(range(steps - 1), gamma_history[1:, 2, 0])
 ax1.set_title("Price Signal 2 ↔ 0")
 ax1.set_xlabel("Iterations")
 ax1.set_ylabel("Value")
@@ -350,7 +326,7 @@ ax1.minorticks_on()
 ax1.grid(True, which='minor', linestyle=':', linewidth=0.3)
 
 ax2 = fig.add_subplot(gs[0, 1])
-ax2.plot(range(steps), gamma_history[:, 1, 0])
+ax2.plot(range(steps - 1), gamma_history[1:, 1, 0])
 ax2.set_title("Price Signal 1 ↔ 0")
 ax2.set_xlabel("Iterations")
 ax2.set_ylabel("Value")
@@ -360,7 +336,7 @@ ax2.grid(True, which='minor', linestyle=':', linewidth=0.3)
 
 gs_bottom = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs[1, :], wspace=0.5)
 ax3 = fig.add_subplot(gs_bottom[0])
-ax3.plot(range(steps), gamma_history[:, 2, 1])
+ax3.plot(range(steps - 1), gamma_history[1:, 2, 1])
 ax3.set_title("Price Signal 2 ↔ 1")
 ax3.set_xlabel("Iterations")
 ax3.set_ylabel("Value")

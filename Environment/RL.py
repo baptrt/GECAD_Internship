@@ -109,7 +109,7 @@ class PeerToPeerMarketEnv(gym.Env):
             )
 
             # Calcul du reward partiel pondéré
-            reward = self._compute_reward_Gaussian(self.T)
+            reward = self._compute_reward_epsilon(self.T)
             weight = 0.1 + 0.9 * (internal_step / self.max_iters)  # poids croissant [0.1 à 1.0]
             total_reward += reward * weight
             weight_sum += weight
@@ -194,7 +194,7 @@ class PeerToPeerMarketEnv(gym.Env):
         # Weighting coefficients
         alpha = 0.0  # gamma standard penalty
         beta = 1    # weight on total energy
-        delta = 0.01  # gamma variation penalty
+        delta = 0.1  # gamma variation penalty
 
         # Gamma standard
         gamma_norm = np.linalg.norm(self.last_gamma) / ((self.n_agents + 1) ** 2)
@@ -228,7 +228,7 @@ class PeerToPeerMarketEnv(gym.Env):
         alpha = 0.0  # gamma standard penalty (non utilisé ici)
         beta = 1.0   # weight on total energy
         delta = 0.01  # gamma variation penalty
-        epsilon = 1
+        epsilon = 0.5
 
         # Gamma standard
         gamma_norm = np.linalg.norm(self.last_gamma) / ((self.n_agents + 1) ** 2)
@@ -246,9 +246,8 @@ class PeerToPeerMarketEnv(gym.Env):
         if P_l <= P_l_bar - epsilon:
             reward_energy = beta * (P_l**2) / P_l_bar**2
         elif P_l <= P_l_bar:
-            # Pénalité douce à l'approche de la contrainte
-            x = (P_l_bar - P_l) / epsilon  # x ∈ (0,1)
-            reward_energy = beta * (P_l**2) / P_l_bar**2 * x**2  # chute quadratique
+            x = (P_l_bar - P_l) / epsilon  
+            reward_energy = beta * (P_l**2) / P_l_bar**2 * x**2  
         else:
             margin = P_l - P_l_bar
             reward_energy = - beta * (margin**2) / P_l_bar**2

@@ -205,12 +205,30 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
+# Find the first iteration where the reward becomes negative.
+for i, r in enumerate(reward_history):
+    if r < 0:
+        iter_reward_neg = i
+        val_reward_neg = r
+        break
+
 plt.figure(figsize=(10, 6))
 plt.plot(np.arange(len(reward_history)), reward_history, label="Reward (with RL)", color="purple")
+plt.axvline(x=iter_reward_neg, color='red', linestyle='--', linewidth=1.2, label="Reward becomes negative")
+plt.plot(iter_reward_neg, val_reward_neg, marker='*', color='red', markersize=12, label="Negative Reward Onset")
+plt.annotate(f"Negative reward\nstarts here ({iter_reward_neg})",
+             xy=(iter_reward_neg, val_reward_neg),
+             xytext=(iter_reward_neg + 3, val_reward_neg - 1),
+             arrowprops=dict(arrowstyle="->", color='red'),
+             fontsize=10, color='red')
+
+plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+plt.minorticks_on()
+plt.grid(True, which='minor', linestyle=':', linewidth=0.4, alpha=0.5)
+
 plt.xlabel("Iterations")
 plt.ylabel("Reward")
 plt.title("Evolution of the reward")
-plt.grid(True)
 plt.legend()
 plt.tight_layout()
 plt.show()

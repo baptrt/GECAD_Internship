@@ -213,7 +213,7 @@ for i, r in enumerate(reward_history):
         break
 
 plt.figure(figsize=(10, 6))
-plt.plot(np.arange(len(reward_history)), reward_history, label="Reward (with RL)", color="purple")
+plt.plot(np.arange(len(reward_history)), reward_history, color="purple")
 plt.axvline(x=iter_reward_neg, color='red', linestyle='--', linewidth=1.2, label="Reward becomes negative")
 plt.plot(iter_reward_neg, val_reward_neg, marker='*', color='red', markersize=12, label="Negative Reward Onset")
 plt.annotate(f"Negative reward\nstarts here ({iter_reward_neg})",

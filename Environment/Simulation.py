@@ -230,10 +230,19 @@ final_Pl_rl = Pl_history_rl[-1]
 final_Pl_no_signal = Pl_history[-1]
 
 # Draw the two curves 
+# Find the first crossing of the threshold
+for idx, (it, val) in enumerate(zip(iterations_rl, Pl_history_rl)):
+    if val > P_l_bar:
+        iter_cross = it
+        val_cross = val
+        break
+
 plt.figure(figsize=(10, 6))
 plt.plot(iterations_rl, Pl_history_rl, label="Market with Price Signal", color="blue", marker='x', markersize=6, linestyle='-')
 plt.plot(iterations_no_signal, Pl_history, label="Market without Price Signal", color="green", marker='x', markersize=6, linestyle='-')
 plt.axhline(P_l_bar, color="red", linestyle="--", label="Congestion Treshold", linewidth=1.5)
+plt.axvline(x=iter_cross, color='purple', linestyle='--', linewidth=1.2, label="First Threshold Crossing")
+plt.plot(iter_cross, val_cross, marker='*', markersize=12, color='black', label="Crossing Point")
 
 # Add annotations for final values
 plt.annotate(f"{final_Pl_rl:.2f} a.u.", 
@@ -247,6 +256,13 @@ plt.annotate(f"{final_Pl_no_signal:.2f} a.u.",
              xytext=(final_iter_no_signal - 5, final_Pl_no_signal + 1),
              arrowprops=dict(arrowstyle="->", color='green'),
              fontsize=10, color='green')
+
+plt.annotate("Threshold crossed", 
+             xy=(iter_cross, val_cross), 
+             xytext=(iter_cross + 2, val_cross + 1),
+             arrowprops=dict(arrowstyle="->", color='purple'),
+             fontsize=10, color='purple')
+
 
 # Refined grid pattern
 plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
@@ -295,20 +311,25 @@ n = n_agents + 1
 steps = gamma_history.shape[0]
 
 fig, axes = plt.subplots(n, n, figsize=(3 * n, 3 * n), sharex=True)
-fig.suptitle("Évolution des coefficients Gamma[i, j] par itération", fontsize=16)
+fig.suptitle("Evolution of Price Signal on i ↔ j exchanges by iteration", fontsize=16)
 
 for i in range(n):
     for j in range(n):
-        ax = axes[i, j]
-        ax.plot(range(steps), gamma_history[:, i, j])
-        ax.set_title(f"Gamma[{i}, {j}]")
-        ax.grid(True)
-        if i == n - 1:
-            ax.set_xlabel("Itérations")
-        if j == 0:
-            ax.set_ylabel("Valeur")
+        if i > j: # Matrix is symmetric
+            ax = axes[i, j]
+            ax.plot(range(steps), gamma_history[:, i, j])
+            ax.set_title(f"Price Signal {i} ↔ {j}")
+            
+            ax.grid(True, which='major', linestyle='-', linewidth=0.5)
+            ax.minorticks_on() 
+            ax.grid(True, which='minor', linestyle=':', linewidth=0.3) 
+            
+            if i == n - 1:
+                ax.set_xlabel("Iterations")
+            if j == 0:
+                ax.set_ylabel("Value")
 
-plt.tight_layout(rect=[0, 0, 1, 0.97])  # Ajuste la place pour le titre
+plt.tight_layout(rect=[0, 0, 1, 0.97]) 
 plt.show()
 
 # Save P_l values WITH price signal (RL)

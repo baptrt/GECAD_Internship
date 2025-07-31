@@ -49,7 +49,7 @@ model = SAC(
     verbose=1
 )
 
-model.learn(total_timesteps=1_000, callback=eval_callback)
+model.learn(total_timesteps=100_000, callback=eval_callback)
 
 # ------------------------------
 # 5. Save the model and the VecNormalize wrapper
@@ -71,4 +71,3 @@ for _ in range(100):
     action, _ = model.predict(obs, deterministic=True)
     obs, reward, done, info = loaded_env.step(action)
     print("Reward:", reward)
-    

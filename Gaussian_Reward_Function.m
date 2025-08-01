@@ -12,7 +12,7 @@ reward = beta * exp(-((P_l - P_opt).^2) / (2 * sigma^2));
 % Plot
 figure;
 plot(P_l, reward, 'b-', 'LineWidth', 4); hold on;
-xline(P_opt, '--g', 'P_{opt}', 'LabelVerticalAlignment', 'bottom', 'LineWidth', 2);
+xline(P_opt, '--k', 'P_{opt}', 'LabelVerticalAlignment', 'bottom', 'LineWidth', 2);
 xline(P_l_bar, '--r', 'P_l^{max}', 'LabelVerticalAlignment', 'bottom', 'LineWidth', 2);
 xlabel('Power exchanged with the DSO (P_l)');
 ylabel('Reward');

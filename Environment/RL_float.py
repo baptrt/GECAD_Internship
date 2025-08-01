@@ -15,13 +15,13 @@ class PeerToPeerMarketEnv(gym.Env):
         self.max_gamma = 200.0
         self.min_gamma = -200.0
         self.current_step = 0
-        self.final_reward = 0.0
         self.max_steps = 100
         self.max_error = 1e-3  # Maximum error threshold for termination
         self.last_gamma = np.zeros(self.gamma_dim)  # Last gamma matrix
         self.verbose = verbose  # Pour activer ou désactiver les prints
         self.obs_history = []
         self.gamma_history = []
+        self.reward_history = [] 
 
         # Observation: vector including prices and power exchanges
         self.observation_space = spaces.Box(
@@ -31,9 +31,12 @@ class PeerToPeerMarketEnv(gym.Env):
             dtype=np.float32
         )
 
-        # Action: the gamma matrix (price signal)
+        # Action: the gamma scalar (price signal)
         self.action_space = spaces.Box(
-            low=self.min_gamma, high=self.max_gamma, shape=self.gamma_dim, dtype=np.float32
+            low=self.min_gamma,
+            high=self.max_gamma,
+            shape=(1,),           
+            dtype=np.float32
         )
 
         self.reset()
@@ -95,12 +98,22 @@ class PeerToPeerMarketEnv(gym.Env):
         total_reward = 0.0
         weight_sum = 0.0
 
+        n_agents = len(self.agents)
+        dso_idx = n_agents - 1  # le DSO est le dernier agent
+
         while error > self.max_error and internal_step < self.max_iters:
             
-            gamma = 0.5 * (action + action.T)
-            np.fill_diagonal(gamma, 0.0)
+            # --- Nouveau : gamma est un simple flottant ---
+            gamma_scalar = float(action)  # on suppose que action est scalaire
+            gamma = np.zeros((n_agents, n_agents))
+            # Appliquer gamma uniquement sur les échanges DSO <-> autres
+            for i in range(n_agents):
+                if i != dso_idx:
+                    gamma[i, dso_idx] = gamma_scalar
+                    gamma[dso_idx, i] = gamma_scalar
+
             self.last_gamma = gamma.copy()
-            
+
             # Une itération de simulation avec le gamma courant
             self.T, self.local_prices, self.bt1, self.P, self.Mu, self.T_mean, error = simulate_market_step(
                 self.T, self.agents, self.max_error, self.a, self.b, self.tmin, self.tmax,
@@ -114,22 +127,16 @@ class PeerToPeerMarketEnv(gym.Env):
             total_reward += reward * weight
             weight_sum += weight
 
-            # if self.verbose:
-            #     print(f"\nInternal Step {internal_step}:")
-            #     print(f"Gamma:\n{np.round(gamma, 2)}")
-            #     print(f"P_l = {np.sum(np.abs(self.T[:, -1])):.4f}")
-
             internal_step += 1
 
         # Moyenne pondérée finale
-        if weight_sum > 0:
-            final_weighted_reward = total_reward / weight_sum
-        else:
-            final_weighted_reward = 0.0
+        final_weighted_reward = total_reward / weight_sum if weight_sum > 0 else 0.0
 
         obs = self._get_obs()
         terminated = bool(error < self.max_error or self.current_step >= self.max_steps)
         truncated = internal_step >= self.max_iters
+        
+        self.reward_history.append(float(final_weighted_reward))
 
         return obs, final_weighted_reward, terminated, truncated, {
             "internal_steps": internal_step,
@@ -141,12 +148,9 @@ class PeerToPeerMarketEnv(gym.Env):
         super().reset(seed=seed)
 
         self.current_step = 0
-        self.final_reward = 0.0
 
         self.T = np.zeros((self.n_agents + 1, self.n_agents + 1))
         self.local_prices = np.zeros_like(self.T)
-        self.local_prices[:, -1] = 2
-        self.local_prices[-1, :] = 2
         
         self.bt1 = np.zeros_like(self.T)
         self.P = np.zeros(self.n_agents + 1)
@@ -154,7 +158,6 @@ class PeerToPeerMarketEnv(gym.Env):
         self.T_mean = np.zeros(self.n_agents + 1)
         self.last_gamma = np.zeros((self.n_agents + 1, self.n_agents + 1))
         self.error = 2 * self.max_error
-
 
         self.rho = 10.0
         self.rhol = 1.0
@@ -190,7 +193,7 @@ class PeerToPeerMarketEnv(gym.Env):
         # Power exchanged with the grid
         P_l = np.sum(np.abs(T[:, -1]))
         P_l_bar = 3.0
-        epsilon = 1
+        epsilon = 0
 
         # Weighting coefficients
         alpha = 0.0  # gamma standard penalty

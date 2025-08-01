@@ -57,10 +57,14 @@ def update_gamma_with_rl(agents, T, local_prices, gamma, max_gamma, rl_model):
     obs = env.normalize_obs(obs)
 
     action, _ = rl_model.predict(obs, deterministic=True)
-    action = action.reshape(gamma.shape)
-
-    gamma = 0.5 * (action + action.T)
-    np.fill_diagonal(gamma, 0.0)
+    
+    gamma_scalar = float(action)  
+    gamma = np.zeros((n_agents+1, n_agents+1))
+    
+    for i in range(n_agents+1):
+        if i != n_agents:
+            gamma[i, n_agents] = gamma_scalar
+            gamma[n_agents, i] = gamma_scalar
 
     return gamma
 

@@ -1,13 +1,11 @@
 from stable_baselines3 import SAC
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
-from stable_baselines3.common.callbacks import EvalCallback
-from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.callbacks import EvalCallback, BaseCallback
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 from RL import PeerToPeerMarketEnv
 env = PeerToPeerMarketEnv()
@@ -27,28 +25,17 @@ eval_env = VecNormalize(eval_env, training=False, norm_obs=True, norm_reward=Tru
 # ------------------------------
 # 3. EvalCallback
 log_dir = "./logs"
-os.makedirs(log_dir, exist_ok=True)
+best_model_dir = os.path.join(log_dir, "best_model")
+os.makedirs(best_model_dir, exist_ok=True)
 
 eval_callback = EvalCallback(
     eval_env,
-    best_model_save_path=os.path.join(log_dir, "best_model"),
+    best_model_save_path=best_model_dir,
     log_path=log_dir,
     eval_freq=1000,
     n_eval_episodes=5,
     deterministic=True,
     render=False
-)
-
-# ------------------------------
-# 4. Train the model
-policy_kwargs = dict(net_arch=[128, 128])
-model = SAC(
-    "MlpPolicy",
-    train_env,
-    policy_kwargs=policy_kwargs,
-    batch_size=128,
-    ent_coef='auto_1',
-    verbose=1
 )
 
 # --- 1) Callback definition to recup rewards ---
@@ -61,49 +48,60 @@ class RewardLoggerCallback(BaseCallback):
         self.rewards.append(self.locals['rewards'][0])
         return True
 
-# --- 2) Callback creation ---
 reward_callback = RewardLoggerCallback()
 
-# --- 3) Training ---
-total_steps = 1_000_000
+# ------------------------------
+# 4. Load existing model if available
+policy_kwargs = dict(net_arch=[128, 128])
+model_path = os.path.join(best_model_dir, "sac_model")
+vecnorm_path = os.path.join(best_model_dir, "vecnormalize.pkl")
 
-model.learn(total_timesteps=total_steps, callback=reward_callback)
+if os.path.exists(model_path + ".zip") and os.path.exists(vecnorm_path):
+    print("=== Loading existing model and VecNormalize ===")
+    train_env = VecNormalize.load(vecnorm_path, train_env)
+    model = SAC.load(model_path, env=train_env)
+else:
+    print("=== No existing model found, training from scratch ===")
+    model = SAC(
+        "MlpPolicy",
+        train_env,
+        policy_kwargs=policy_kwargs,
+        batch_size=128,
+        ent_coef='auto_1',
+        verbose=1
+    )
+
+# --- 5) Training (continue training if model was loaded) ---
+model.learn(total_timesteps=500_000, callback=[reward_callback, eval_callback])
 
 def moving_average(x, window_size=50):
     return np.convolve(x, np.ones(window_size)/window_size, mode='valid')
 
-# --- 4) Plot ---
+# --- 6) Plot ---
 plt.figure(figsize=(10,5))
-plt.plot(reward_callback.rewards, alpha=0.3, label="Gross reward")
-plt.plot(moving_average(reward_callback.rewards, 50), label="Moving average (50)", linewidth=2)
+plt.plot(reward_callback.rewards, alpha=0.3, label="Reward brut")
+plt.plot(moving_average(reward_callback.rewards, 50), label="Moyenne glissante (50)", linewidth=2)
 plt.xlabel("Step")
 plt.ylabel("Reward")
-plt.title("Evolution of reward during training (smoothed)")
+plt.title("Évolution du reward (lissé)")
 plt.legend()
 plt.grid()
 plt.show()
 
-df = pd.DataFrame({
-    "step": range(len(reward_callback.rewards)),
-    "reward": reward_callback.rewards
-})
-df.to_csv("reward_history_{total_step}.csv", index=False)
-print("Rewards saved in reward_history_{total_step}.csv")
+# ------------------------------
+# 7. Save the model and the VecNormalize wrapper
+model.save(model_path)
+train_env.save(vecnorm_path)
 
 # ------------------------------
-# 5. Save the model and the VecNormalize wrapper
-model.save(os.path.join(log_dir, "best_model", "sac_model"))
-train_env.save(os.path.join(log_dir, "best_model", "vecnormalize.pkl"))
-
-# ------------------------------
-# 6. Reload and test (optional, just to check all works)
+# 8. Reload and test (optional)
 loaded_env = DummyVecEnv([lambda: PeerToPeerMarketEnv()])
-loaded_env = VecNormalize.load(os.path.join(log_dir, "best_model", "vecnormalize.pkl"), loaded_env)
+loaded_env = VecNormalize.load(vecnorm_path, loaded_env)
 
 loaded_env.training = False
 loaded_env.norm_reward = False
 
-model = SAC.load(os.path.join(log_dir, "best_model", "sac_model"), env=loaded_env)
+model = SAC.load(model_path, env=loaded_env)
 
 obs = loaded_env.reset()
 for _ in range(100):

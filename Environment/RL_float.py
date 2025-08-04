@@ -219,7 +219,7 @@ class PeerToPeerMarketEnv(gym.Env):
         else:
             reward_energy = - beta * (margin**2) / P_l_bar**2
         
-        reward = reward_energy - delta * gamma_delta
+        reward = reward_energy #- delta * gamma_delta
 
         return reward
 

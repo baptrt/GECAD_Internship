@@ -50,7 +50,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
         self.required_stable_iters = 3
         
     async def on_start(self):
-        model_path = os.path.join(os.path.dirname(__file__), "..", "agents_multi/best_model5")
+        model_path = os.path.join(os.path.dirname(__file__), "..", "agents_multi/best_model_Gaussian/best_model")
         print(f"[{self.agent.name}] Loading SAC model from: {model_path}")
         self.rl_model = SAC.load(model_path)
     

@@ -109,7 +109,7 @@ class PeerToPeerMarketEnv(gym.Env):
             )
 
             # Calcul du reward partiel pondéré
-            reward = self._compute_reward(self.T)
+            reward = self._compute_reward_Gaussian(self.T)
             weight = 0.1 + 0.9 * (internal_step / self.max_iters)  # poids croissant [0.1 à 1.0]
             total_reward += reward * weight
             weight_sum += weight

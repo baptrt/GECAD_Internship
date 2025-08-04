@@ -65,21 +65,30 @@ class RewardLoggerCallback(BaseCallback):
 reward_callback = RewardLoggerCallback()
 
 # --- 3) Training ---
-model.learn(total_timesteps=100_000, callback=reward_callback)
+total_steps = 100_000
+
+model.learn(total_timesteps=total_steps, callback=reward_callback)
 
 def moving_average(x, window_size=50):
     return np.convolve(x, np.ones(window_size)/window_size, mode='valid')
 
 # --- 4) Plot ---
 plt.figure(figsize=(10,5))
-plt.plot(reward_callback.rewards, alpha=0.3, label="Reward brut")
-plt.plot(moving_average(reward_callback.rewards, 50), label="Moyenne glissante (50)", linewidth=2)
+plt.plot(reward_callback.rewards, alpha=0.3, label="Gross reward")
+plt.plot(moving_average(reward_callback.rewards, 50), label="Moving average (50)", linewidth=2)
 plt.xlabel("Step")
 plt.ylabel("Reward")
-plt.title("Évolution du reward (lissé)")
+plt.title("Evolution of reward during training (smoothed)")
 plt.legend()
 plt.grid()
 plt.show()
+
+df = pd.DataFrame({
+    "step": range(len(reward_callback.rewards)),
+    "reward": reward_callback.rewards
+})
+df.to_csv("reward_history_{total_step}.csv", index=False)
+print("Rewards saved in reward_history_{total_step}.csv")
 
 # ------------------------------
 # 5. Save the model and the VecNormalize wrapper

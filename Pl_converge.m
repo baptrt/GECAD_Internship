@@ -1,17 +1,16 @@
-% Load data
-data_spade = readtable('Multi_Agents_Peak/P_l_evolution_gamma.csv');
+% Load datadata_spade = readtable('Multi_Agents_Peak/P_l_evolution_gamma.csv');
 data_rl = readtable('Pl_history_with_signal.csv');
 data_no_signal = readtable('Pl_history_without_signal.csv');
 
-% Extract values
-iter_spade = data_spade.Iteration;
-Pl_spade = data_spade.P_l;
+% Exclude first iteration
+iter_spade = data_spade.Iteration(2:end);
+Pl_spade = data_spade.P_l(2:end);
 
-iter_rl = data_rl.Iteration;
-Pl_rl = data_rl.P_l_with_signal;
+iter_rl = data_rl.Iteration(2:end);
+Pl_rl = data_rl.P_l_with_signal(2:end);
 
-iter_no_signal = data_no_signal.Iteration;
-Pl_no_signal = data_no_signal.P_l_without_signal;
+iter_no_signal = data_no_signal.Iteration(2:end);
+Pl_no_signal = data_no_signal.P_l_without_signal(2:end);
 
 % Plot all three curves with updated colors
 figure;

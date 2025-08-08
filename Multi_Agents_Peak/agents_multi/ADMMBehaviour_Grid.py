@@ -50,7 +50,7 @@ class ADMMBehaviour_Test(OneShotBehaviour):
         self.required_stable_iters = 3
         
     async def on_start(self):
-        model_path = os.path.join(os.path.dirname(__file__), "..", "agents_multi/best_model_Gaussian/best_model")
+        model_path = os.path.join(os.path.dirname(__file__), "..", "agents_multi/best_model_Gaussian_1M/sac_model")
         print(f"[{self.agent.name}] Loading SAC model from: {model_path}")
         self.rl_model = SAC.load(model_path)
     
@@ -432,6 +432,8 @@ class ADMMBehaviour_Test(OneShotBehaviour):
 
         # Prediction of actions by the RL model
         action, _ = self.rl_model.predict(obs, deterministic=True)
+        
+        print(f"[Agent {i}] Action from RL model: {action}, shape: {action.shape}")
         
         gamma_matrix = 0.5 * (action + action.T)
         # gamma_matrix = np.zeros_like(gamma_matrix) 

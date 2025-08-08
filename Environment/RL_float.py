@@ -12,8 +12,8 @@ class PeerToPeerMarketEnv(gym.Env):
         self.n_agents = n_agents
         self.gamma_dim = (n_agents + 1, n_agents + 1)  # Including the grid agent
         self.T = np.zeros((n_agents + 1, n_agents + 1))  # Matrix of power exchanges
-        self.max_gamma = 200.0
-        self.min_gamma = -200.0
+        self.max_gamma = 500.0
+        self.min_gamma = -500.0
         self.current_step = 0
         self.max_steps = 100
         self.max_error = 1e-3  # Maximum error threshold for termination
@@ -122,7 +122,7 @@ class PeerToPeerMarketEnv(gym.Env):
             )
 
             # Calcul du reward partiel pondéré
-            reward = self._compute_reward(self.T)
+            reward = self._compute_reward_Gaussian(self.T)
             weight = 0.1 + 0.9 * (internal_step / self.max_iters)  # poids croissant [0.1 à 1.0]
             total_reward += reward * weight
             weight_sum += weight
@@ -269,7 +269,7 @@ class PeerToPeerMarketEnv(gym.Env):
 
         # Weighting coefficients
         beta = 1.0
-        delta = 0.01
+        delta = 0.1
 
         # Variation in gamma compared with previous step
         if hasattr(self, "prev_gamma"):

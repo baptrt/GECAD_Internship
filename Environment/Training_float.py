@@ -65,7 +65,7 @@ class RewardLoggerCallback(BaseCallback):
 reward_callback = RewardLoggerCallback()
 
 # --- 3) Training ---
-total_steps = 100_000
+total_steps = 300_000
 
 model.learn(total_timesteps=total_steps, callback=reward_callback)
 
@@ -87,8 +87,8 @@ df = pd.DataFrame({
     "step": range(len(reward_callback.rewards)),
     "reward": reward_callback.rewards
 })
-df.to_csv("reward_history_{total_step}.csv", index=False)
-print("Rewards saved in reward_history_{total_step}.csv")
+df.to_csv(f"reward_history_{total_steps}_float.csv", index=False)
+print(f"Rewards saved in reward_history_{total_steps}_float.csv")
 
 # ------------------------------
 # 5. Save the model and the VecNormalize wrapper

@@ -1,2 +1,2 @@
-2025-08-01 15:40:08,416 - peak.bootloader - INFO - instanciating agent agent_0 from file agents_multi/agent_0.py
-2025-08-01 15:40:08,461 - peak.bootloader - INFO - starting agent agent_0
+2025-08-05 11:32:01,058 - peak.bootloader - INFO - instanciating agent agent_0 from file agents_multi/agent_0.py
+2025-08-05 11:32:01,114 - peak.bootloader - INFO - starting agent agent_0

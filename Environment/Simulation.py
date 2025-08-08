@@ -15,14 +15,14 @@ from stable_baselines3 import SAC
 # Loads the standardised driven env
 env_ = PeerToPeerMarketEnv()
 env = DummyVecEnv([lambda: PeerToPeerMarketEnv()])
-env = VecNormalize.load("logs/best_model_Gaussian/vecnormalize.pkl", env)
+env = VecNormalize.load("logs/best_model_Gaussian_1M/vecnormalize.pkl", env)
 # env = VecNormalize.load("logs/best_model/vecnormalize.pkl", env)
 
 # Very important: ensure that the normalisation stats never change again
 env.training = False
 env.norm_reward = False
 obs = env.reset()
-model = SAC.load("logs/best_model_Gaussian/sac_model")
+model = SAC.load("logs/best_model_Gaussian_1M/sac_model")
 # model = SAC.load("logs/best_model/best_model")
 
 # Market parameters
@@ -250,7 +250,6 @@ plt.figure(figsize=(10, 6))
 plt.plot(iterations_rl[1:], Pl_history_rl[1:], label="Market with Price Signal", color="blue", marker='x', markersize=6, linestyle='-')
 plt.plot(iterations_no_signal, Pl_history, label="Market without Price Signal", color="green", marker='x', markersize=6, linestyle='-')
 plt.axhline(P_l_bar, color="red", linestyle="--", label="Congestion Treshold", linewidth=1.5)
-plt.axvline(x=iter_cross, color='black', linestyle='--', linewidth=1.2, label="Threshold Violation")
 
 # Add annotations for final values
 plt.annotate(f"{final_Pl_rl:.2f} a.u.", 
@@ -272,7 +271,7 @@ plt.grid(True, which='minor', linestyle=':', linewidth=0.4, alpha=0.5)
 
 plt.xlabel("Iterations")
 plt.ylabel("Total power exchanged with the DSO (a.u.)")
-plt.title("Comparison with and without a price signal")
+plt.title("Comparison with and without a price signal", fontweight='bold')
 plt.legend()
 plt.tight_layout()
 plt.show()
